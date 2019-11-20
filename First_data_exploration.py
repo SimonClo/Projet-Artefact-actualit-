@@ -103,5 +103,3 @@ print("proportion of articles with less than 600 caracters : ", int(nb_less_600*
 
 nb_less_800 = len(articles_df[articles_df['size'] < 800])
 print("proportion of articles with less than 800 caracters : ", int(nb_less_800*100/nb_articles), '%')
-
-# %%
