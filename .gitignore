@@ -1,5 +1,12 @@
 .ipynb_checkpoints
 *.ipynb
 .vscode
+<<<<<<< HEAD
 data/*
 __pycache__
+||||||| merged common ancestors
+data
+=======
+data
+__pycache__
+>>>>>>> add text extraction using gallica API
