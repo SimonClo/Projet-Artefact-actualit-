@@ -29,9 +29,10 @@ def webhook():
                 webhook_event = entry["messaging"][0]
                 print(webhook_event)
                 sender_psid = webhook_event['sender']['id']
-                if User.query.filter_by(id=sender_psid) == []:
+                print(User.query.filter_by(id=int(sender_psid)).first())
+                if User.query.filter_by(id=int(sender_psid)).first() == None:
                     print('ok')
-                    user = User(id=sender_psid, action="welcome",context="")
+                    user = User(id=int(sender_psid), action="welcome",context="")
                     db.session.add(user)
                     db.session.commit()
                 print('ok')
@@ -59,7 +60,8 @@ def webhook():
 
 def handle_message(sender_psid, received_message):
     resp = {}
-    user = User.query.filter_by(id=sender_psid).first()
+    user = User.query.filter_by(id=int(sender_psid)).first()
+    print(user.action)
     action_tmp = user.action
 
     if 'text' in received_message:
@@ -74,6 +76,7 @@ def handle_message(sender_psid, received_message):
                 "title": "Non",
                 "payload": "no",
                 "image_url": "http://example.com/img/red.png"}]
+
             action_tmp = 'article'
 
         elif user.action == 'article':
@@ -107,7 +110,9 @@ def handle_message(sender_psid, received_message):
                                                                            "title": "Non!",
                                                                            "payload": "no",}],}]}}
 
+    print(action_tmp)
     user.action = action_tmp
+    db.session.commit()
     callSendAPI(sender_psid, resp)
 
 def handle_postback(sender_psid, received_postback):
