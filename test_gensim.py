@@ -13,9 +13,15 @@ import os
 import json
 from nltk import word_tokenize
 from stop_words import get_stop_words
+import nltk
+from nltk.corpus import stopwords
 
 import gensim
 from gensim.models import CoherenceModel
+from gensim import corpora
+from gensim.utils import simple_preprocess
+
+import pickle
 
 import pyLDAvis
 import pyLDAvis.gensim  
@@ -23,6 +29,10 @@ import matplotlib.pyplot as plt
 # %matplotlib inline
 
 from nltk.stem.snowball import FrenchStemmer
+
+import pandas as pd
+
+stemmer = FrenchStemmer()
 
 
 # +
@@ -32,9 +42,6 @@ from nltk.stem.snowball import FrenchStemmer
 # ### Create list of stop words
 
 # +
-import nltk
-from nltk.corpus import stopwords
-
 stop_words = set(stopwords.words('french'))
 
 # add stop words
@@ -44,7 +51,7 @@ stop_words_to_add = ['a', 'peut', 's', 'plus', 'si', 'tout', 'ce', 'cette', 'mai
                     'autours', 'porte', 'prépare', 'préparer', 'trois', 'deux', 'quoi', 'quatre', 'cinq', 'six', 'sept', 'homme', 'jeune', 'france',
                     'entre', 'grand', 'grands', 'grande', 'grandes', 'après', 'partout', 'passe', 'jour', 'part', 'certains', 'certain',
                      'quelqu', 'aujourd', 'million', 'contre', 'pour', 'petit', 'ancien', 'demand', 'beaucoup', 'toujours'
-                    'lorsqu', 'jusqu', 'hommme', 'seul']
+                    'lorsqu', 'jusqu', 'hommme', 'seul', 'puis', 'faut', 'autr', 'toujour']
 stop_words_to_add += get_stop_words('fr')
 
 for word in stop_words_to_add:
@@ -72,7 +79,6 @@ text = [word.lower() for word in text if word.lower() not in stop_words]
 
 # ### Lemmatization
 
-stemmer = FrenchStemmer()
 text = [stemmer.stem(word) for word in text]
 text = [word for word in text if len(word)>3]
 print(text)
@@ -80,10 +86,6 @@ print(text)
 # ### Create corpus and dictionary
 
 # +
-from gensim import corpora
-from gensim.utils import simple_preprocess
-
-
 # Create a dictionary, wich contains only words (tokens)
 dictionary = corpora.Dictionary([text])
 
@@ -92,12 +94,10 @@ dictionary = corpora.Dictionary([text])
 corpus = [dictionary.doc2bow((token) for token in text)]
 
 # Save them
-import pickle
 pickle.dump(corpus, open('corpus.pkl', 'wb'))
 dictionary.save('dictionary.gensim')
 
 # +
-import gensim
 NUM_TOPICS = 4
 ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=15)
 ldamodel.save('model5.gensim')
@@ -115,21 +115,25 @@ from gensim.utils import simple_preprocess
 import pickle
 
 articles = []
+titles = []
 print('...')
 for year in os.listdir('./cleaned_articles/'):
-    for filename in os.listdir('./cleaned_articles/'+year):
-        if (len(articles)<10000):
-                path = './cleaned_articles/'+year+'/'+filename
-                file = open(path, 'r')
-                read_file = json.loads(file.read())[0]['text']
+    if year != '.DS_Store':
+        for filename in os.listdir('./cleaned_articles/'+year):
+            if (len(articles)<10000):
+                    path = './cleaned_articles/'+year+'/'+filename
+                    file = open(path, 'r')
+                    read_file = json.loads(file.read())[0]
+                    titles.append(read_file['title'])
+                    read_file = read_file['text']
 
-                #removing punctuation, stop words and lemmatize
-                text = "".join([char if (char.isalnum() or char==" ") else " " for char in read_file])
-                text = word_tokenize(text)
-                text = [word.lower() for word in text if word.lower() not in stop_words]
-                text = [stemmer.stem(word) for word in text]
-                text = [word for word in text if len(word)>3 and word not in stop_words]
-                articles.append(text)
+                    #removing punctuation, stop words and lemmatize
+                    text = "".join([char if (char.isalnum() or char==" ") else " " for char in read_file])
+                    text = word_tokenize(text)
+                    text = [word.lower() for word in text if word.lower() not in stop_words]
+                    text = [stemmer.stem(word) for word in text]
+                    text = [word for word in text if len(word)>3 and word not in stop_words]
+                    articles.append(text)
     
 dictionary2 = corpora.Dictionary(articles)
 corpus2 = [dictionary2.doc2bow(article) for article in articles]
@@ -144,7 +148,7 @@ print('Done')
 # +
 print('...')
 
-NUM_TOPICS = 10
+NUM_TOPICS = 5
 ldamodel2 = gensim.models.ldamodel.LdaModel(
     corpus2, num_topics = NUM_TOPICS, id2word=dictionary2, passes=15, per_word_topics=True, update_every=1
 )
@@ -188,17 +192,10 @@ mallet_path = './mallet-2.0.8/bin/mallet'
 ldamallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus2, num_topics=5, id2word=dictionary2)
 
 
-# +
 # Show Topics
 for topic in ldamallet.show_topics(formatted=False):
     print(topic)
     print()
-
-# Visualize the topics
-#pyLDAvis.enable_notebook()
-#vis = pyLDAvis.gensim.prepare(ldamallet, corpus2, dictionary2)
-#vis
-# -
 
 #Coherence
 coherence_model_ldamallet = CoherenceModel(model=ldamallet, texts=articles, dictionary=dictionary2, coherence='c_v')
@@ -253,6 +250,99 @@ plt.show()
 
 #
 
+# ### Give a document and find his dominant topic
 
+# +
+# Get document you want to see (last document)
+# Create a list of words of first article
+#file3 = open('cleaned_articles/1999/22_07_1999.json', 'r')
+file3 = open('cleaned_articles/1999/29_07_1999.json', 'r') # Juifs marocains
+read_file3 = json.loads(file3.read())[0]
+title3 = read_file3['title']
+text3 = read_file3['text']
+
+
+#removing punctuation : 
+text3 = "".join([char if (char.isalnum() or char==" ") else " " for char in text3])
+text3 = word_tokenize(text3)
+
+# remove stop words
+text3 = [word.lower() for word in text3 if word.lower() not in stop_words]
+
+text3 = [stemmer.stem(word) for word in text3]
+text3 = [word for word in text3 if len(word)>3]
+
+
+
+# Create a dictionary, wich contains only words (tokens)
+dictionary3 = corpora.Dictionary([text3])
+
+
+# Create corpus with data
+corpus3 = [dictionary3.doc2bow((token) for token in text3)]
+
+# -
+
+def format_topics_sentences(ldamodel, corpus, texts):
+    # Init output
+    sent_topics_df = pd.DataFrame()
+
+    # Get main topic in each document
+    for i, row in enumerate(ldamodel[corpus]):
+        print(row)
+        row = sorted(row, key=lambda x: (x[1]), reverse=True)
+        # Get the Dominant topic, Perc Contribution and Keywords for each document
+        for j, (topic_num, prop_topic) in enumerate(row):
+            if j == 0:  # => dominant topic
+                wp = ldamodel.show_topic(topic_num)
+                topic_keywords = ", ".join([word for word, prop in wp])
+                sent_topics_df = sent_topics_df.append(pd.Series([int(topic_num), round(prop_topic,4), topic_keywords]), ignore_index=True)
+            else:
+                break
+    sent_topics_df.columns = ['Dominant_Topic', 'Perc_Contribution', 'Topic_Keywords']
+
+    # Add original text to the end of the output
+    contents = pd.Series(texts)
+    sent_topics_df = pd.concat([sent_topics_df, contents], axis=1)
+    return(sent_topics_df)
+
+
+df_topic_sents_keywords = format_topics_sentences(ldamodel=ldamallet, corpus=corpus3, texts=title3)
+
+# +
+# Format
+df_dominant_topic = df_topic_sents_keywords.reset_index()
+df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Text']
+
+# Show
+df_dominant_topic.head(15)
+# + {}
+
+
+df_topic_sents_keywords_2 = format_topics_sentences(ldamodel=ldamallet, corpus=corpus2, texts=titles)
+
+# +
+# Group top 5 sentences under each topic
+sent_topics_sorteddf_mallet = pd.DataFrame()
+
+sent_topics_outdf_grpd = df_topic_sents_keywords_2.groupby('Dominant_Topic')
+
+for i, grp in sent_topics_outdf_grpd:
+    sent_topics_sorteddf_mallet = pd.concat([sent_topics_sorteddf_mallet, 
+                                             grp.sort_values(['Perc_Contribution'], ascending=[0]).head(1)], 
+                                            axis=0)
+
+# Reset Index    
+sent_topics_sorteddf_mallet.reset_index(drop=True, inplace=True)
+
+# Format
+sent_topics_sorteddf_mallet.columns = ['Topic_Num', "Topic_Perc_Contrib", "Keywords", "Text"]
+
+# Show
+sent_topics_sorteddf_mallet.head()
+# + {}
+#Future work to do
+# Grid search, search best parameters with sklearn (see mail of Louise)
+# -
 
 
