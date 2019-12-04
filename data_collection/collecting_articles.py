@@ -39,16 +39,14 @@ def get_newspaper_reference(title,match_nums=1) :
     return results
 
 def get_issues_reference_by_name(title,yearStart,yearEnd,ocrQuality=0.6):
-    refs = []
-    cqlQuery = f"dc.title adj '{title}' and dc.type adj 'fasicule' and (gallicapublication_date>='{yearStart}/01/01' and gallicapublication_date<='{yearEnd}/12/31') and acces adj 'fayes' and ocrquality>={ocrQuality}"
-    r = requests.get(f"http://gallica.bnf.fr/SRU?version=1.2&collapsing=false&maximumRecords=50&operation=searchRetrieve&query={cqlQuery}")
+    cqlQuery = f"dc.title any '{title}' and dc.type any fascicule"
+    r = requests.get(f"http://gallica.bnf.fr/SRU?version=1.2&maximumRecords=1&operation=searchRetrieve&query={cqlQuery}")
     strContent = r.content.decode("utf-8")
-    print(strContent)
     xmlContent = ElementTree.fromstring(strContent)
-    for record in xmlContent.find("srw:records",ns) :
-        print(record.find("srw:recordData/oai_dc:dc/dc:date",ns).text)
+    newspaper_ref = xmlContent.find("srw:records/srw:record/srw:recordData/oai_dc:dc/dc:identifier",ns).text.split("/")[5]
+    return get_issues_reference_by_newspaper_ref(newspaper_ref,yearStart,yearEnd,ocrQuality)
 
-def get_issues_reference_by_newspaper_ref(ref,yearStart,yearEnd,ocrSuality=0.6):
+def get_issues_reference_by_newspaper_ref(ref,yearStart,yearEnd,ocrQuality=0.6):
     refs = []
     bar = Bar("fetching issues", max=yearEnd-yearStart+1)
     for year in range(yearStart,yearEnd+1):

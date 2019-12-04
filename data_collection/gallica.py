@@ -40,7 +40,8 @@ The supported commands for this API are :
         parser = argparse.ArgumentParser(
             description="Retrieve all the matching articles"
         )
-        parser.add_argument("-r","--ref",help="reference of the searched article")
+        parser.add_argument("-r","--ref",help="reference of the searched newspaper")
+        parser.add_argument("-n","--name",help="name of the searched newspaper")
         parser.add_argument("--start",type=int,help="year to start searching articles for (default 1900)")
         parser.add_argument("--end",type=int,help="year up to which articles should be searched for (default 1950)")
         args = parser.parse_args(stringArgs)
@@ -50,8 +51,11 @@ The supported commands for this API are :
             yearStart = args.start
         if args.end is not None : 
             yearEnd = args.end
-        references = colart.get_issues_reference_by_newspaper_ref(args.ref,yearStart,yearEnd)
-        print("\n".join(references))
+        if (int(args.ref) + int(args.name) != 1) :
+            print("exactly one of the --ref and --name arguments must be given")
+        else :
+            references = colart.get_issues_reference_by_newspaper_ref(args.ref,yearStart,yearEnd)
+            print("\n".join(references))
 
 if __name__ == "__main__":
     Gallica()
