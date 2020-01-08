@@ -24,3 +24,11 @@ All data should be stored on the computer using the following hierarchy :
       |-dd_mm_yyyy.json (issue of the day)
 
 ```
+
+## Collecting new articles:
+
+the data folder contains a cli tool `gallica.py` that allows to fetch new articles from the Gallica website and store them in 
+the data directory. This tool provides two functionalities : 
+- search : gives the reference and some informations given a periodic title
+- retrieve : fetch articles from a given periodic, and process them before storing them in the data directory
+for more info about this tool run `python gallica.py --help`
