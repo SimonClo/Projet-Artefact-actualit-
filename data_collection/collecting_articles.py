@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from progress.bar import Bar
+from tqdm import tqdm
 from xml.etree import ElementTree
 import logging
 
@@ -30,7 +30,6 @@ def get_newspaper_reference(title,match_nums=1) :
     r = requests.get(f"http://gallica.bnf.fr/SRU?version=1.2&maximumRecords={match_nums}&operation=searchRetrieve&query={cqlQuery}")
     strContent = r.content.decode("utf-8")
     xmlContent = ElementTree.fromstring(strContent)
-    bar = Bar("finding matching newspaper",max=match_nums)
     for record in xmlContent.find("srw:records",ns) :
         periodic = {
             "title" : record.findall("srw:recordData/oai_dc:dc/dc:title",ns)[0].text,
@@ -45,8 +44,6 @@ def get_newspaper_reference(title,match_nums=1) :
         except :
             periodic["issues"] = "unknown"
         results.append(periodic)
-        bar.next()
-    bar.finish()
     return results
 
 def get_issues_reference_by_name(title,yearStart,yearEnd,ocrQuality=0.6):
@@ -85,8 +82,7 @@ def get_issues_reference_by_newspaper_ref(ref,yearStart,yearEnd,ocrQuality=0.6):
         list -- a list of all the references of the issues from the given newspaper
     """
     refs = []
-    bar = Bar("fetching issues", max=yearEnd-yearStart+1)
-    for year in range(yearStart,yearEnd+1):
+    for year in tqdm(range(yearStart,yearEnd+1)):
         r = requests.get(f"https://gallica.bnf.fr/services/Issues?ark=ark:/12148/{ref}/date&date={year}")
         strIssues = r.content.decode("utf-8")
         try :
@@ -95,8 +91,6 @@ def get_issues_reference_by_newspaper_ref(ref,yearStart,yearEnd,ocrQuality=0.6):
                 refs.append(issue.attrib["ark"])
         except :
             logging.info(f"no issues for year {year}")
-        bar.next()
-    bar.finish()
     return refs
 
 def get_issue_by_ref(ref):
@@ -115,12 +109,12 @@ def get_issue_by_ref(ref):
 
     """
     r = requests.get(f"https://gallica.bnf.fr/ark:/12148/{ref}.texteBrut")
-    soup = BeautifulSoup(r.content,features="html.parser")
+    soup = BeautifulSoup(r.content,features="lxml")
     issue = {}
     infos = soup.select("p > strong")
     issue["newspaper"] = list(filter(lambda tag: tag.text=="Titre : ",infos))[0].parent.text[8:]
     issue["date"] = list(filter(lambda tag: tag.text=="Date d'édition : ",infos))[0].parent.text[17:]
     text_begining = soup.find("hr")
     issue["raw_text"] = [elt.text for elt in text_begining.find_next_siblings("p")]
-    issue["url"] = f"https://gallica.bnf.fr/arl:/12148/{ref}"
+    issue["url"] = f"https://gallica.bnf.fr/ark:/12148/{ref}"
     return issue
