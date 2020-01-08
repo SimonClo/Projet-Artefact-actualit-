@@ -39,6 +39,7 @@ import json
 
 # %%
 nltk.download("all-corpora")
+nltk.download('punkt')
 
 # %% [markdown]
 # On teste l'import du corpus français en affichant les stopwords :
@@ -133,3 +134,5 @@ stemmer = FrenchStemmer()
 
 other_stem = [stemmer.stem(word) for word in words_base]
 print(" ".join(other_stem))
+
+# %%
