@@ -1,5 +1,0 @@
-Flask
-gunicorn
-requests
-flask_sqlalchemy
-flask-migrate
