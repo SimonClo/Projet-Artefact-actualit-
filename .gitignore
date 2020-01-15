@@ -8,3 +8,6 @@ bot/env
 data/*
 data_access/db_dumps/*
 __pycache__
+*.gensim
+*.gensim.*
+*.pkl
