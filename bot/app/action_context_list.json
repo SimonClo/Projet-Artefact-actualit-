@@ -1,0 +1,50 @@
+[
+  {
+    "Action": "welcome",
+    "Context": "",
+    "Message": ["Bonjour! Je suis le bot archiviste, voulez-vous un 1er article ?","test"],
+    "Quick Replies": ["Oui","Non"]
+  },
+  {
+    "Action": "welcome",
+    "Context": "repeat",
+    "Message": ["En quoi puis-je vous \u00eatre utile ?"],
+    "Quick Replies": ["Article","Explication"]
+  },
+  {
+    "Action": "article",
+    "Context": "",
+    "Message": ["Voici un premier article d'actualit\u00e9. Souhaitez vous en consulter un autre ou une archive ?"],
+    "Quick Replies": ["Article","Archive","Non"]
+  },
+  {
+    "Action": "article",
+    "Context": "repeat",
+    "Message": ["Voici un autre article d'actualit\u00e9.  Souhaitez vous en consulter un autre ou une archive ?"],
+    "Quick Replies": ["Article","Archive","Non"]
+  },
+  {
+    "Action": "archive",
+    "Context": "",
+    "Message": ["Voici une archive en lien avec l'actualit\u00e9 ci-dessus. Cette archive vous convient-elle ? Voulez-vous voir un autre article d'actualit\u00e9 ?"],
+    "Quick Replies": ["Archive","Article","Non"]
+  },
+  {
+    "Action": "archive",
+    "Context": "from_archive",
+    "Message": ["Voici une autre archive. Cette archive vous convient-elle ? Voulez-vous voir un autre article d'actualit\u00e9 ?"],
+    "Quick Replies": ["Archive","Article","Non"]
+  },
+  {
+    "Action": "explanation",
+    "Context": "",
+    "Message": ["Voulez-vous que je vous explique mon fonctionnement ?"],
+    "Quick Replies": ["Oui","Non"]
+  },
+  {
+    "Action": "explanation_yes",
+    "Context": "",
+    "Message": ["Je suis le Petit Archiviste, je peux vous pr\u00e9senter des articles d'actualit\u00e9 puis vous proposer des articles d'archives en lien avec ceux-ci"],
+    "Quick Replies": ["Ok"]
+  }
+]
