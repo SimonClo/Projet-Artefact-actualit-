@@ -64,38 +64,16 @@ The supported commands for this API are :
         if (int(args.ref!=None) + int(args.newspaper!=None) + int(args.issue!=None) != 1) :
             print("exactly one of the --ref, --newspaper or --issue arguments must be given")
         else :
-            if (int(args.ref!=None) + int(args.newspaper!=None) == 1):
-                if (args.ref) :
-                    refs = colart.get_issues_reference_by_newspaper_ref(args.ref,yearStart,yearEnd)
-                else :
-                    refs = colart.get_issues_reference_by_name(args.newspaper,yearStart,yearEnd)
-                if (args.dir) :
-                    p = Pool(8)
-                    tasks = []
-                    pbar=tqdm(total=len(refs))
-                    for ref in refs :
-                        tasks.append(p.apply_async(scrap_issue,(ref,args.dir),callback=lambda x:pbar.update()))
-                    for task in tasks:
-                        task.get()
-                else :
-                    print("\n".join(refs))
-            else :
-                issue = colart.get_issue_by_ref(args.issue)
-                if args.dir :
-                    extract.store_articles(issue,args.dir)
-                else :
-                    articles = extract.get_articles(issue["raw_text"])
-                    print("issue retrieved : ")
-                    print(f"newspaper : {issue['newspaper']}")
-                    print(f"date : {issue['date']}")
-                    print("\n")
-                    for article in articles :
-                        print(f"title : {article['title']}")
-                        print(article["text"])
-                        print("\n")
-
-#A helper function to paralellize scraping tasks
+            if args.issue is not None :
+                fetch_one_issue(args)
+            else:
+                fetch_all_issues(args,yearStart,yearEnd)
+                
+#Helper functions
 def scrap_issue(*args):
+    """
+    Helper for scrapping task paralellization
+    """
     ref = args[0]
     directory = args[1]
     try :
@@ -103,6 +81,43 @@ def scrap_issue(*args):
         extract.store_articles(issue,directory)
     except :
         logging.info(f"invalid fromat for reference : {ref}")
+
+def fetch_one_issue(args):
+    """
+    Fetch one issue, store it or print it given args
+    """
+    issue = colart.get_issue_by_ref(args.issue)
+    if args.dir :
+        extract.store_articles(issue,args.dir)
+    else :
+        articles = extract.get_articles(issue["raw_text"])
+        print("issue retrieved : ")
+        print(f"newspaper : {issue['newspaper']}")
+        print(f"date : {issue['date']}")
+        print("\n")
+        for article in articles :
+            print(f"title : {article['title']}")
+            print(article["text"])
+            print("\n")
+
+def fetch_all_issues(args,yearStart,yearEnd):
+    """
+    Fetch all issues, store them or print them given the args
+    """
+    if (args.ref) :
+        refs = colart.get_issues_reference_by_newspaper_ref(args.ref,yearStart,yearEnd)
+    else :
+        refs = colart.get_issues_reference_by_name(args.newspaper,yearStart,yearEnd)
+    if (args.dir) :
+        p = Pool(8)
+        tasks = []
+        pbar=tqdm(total=len(refs))
+        for ref in refs :
+            tasks.append(p.apply_async(scrap_issue,(ref,args.dir),callback=lambda x:pbar.update()))
+        for task in tasks:
+            task.get()
+    else :
+        print("\n".join(refs))
 
 if __name__ == "__main__":
     Gallica()
