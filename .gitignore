@@ -3,3 +3,7 @@
 *.ipynb
 bot/Token.txt
 bot/Token_fb.txt
+bot/env
+.vscode
+data/*
+__pycache__

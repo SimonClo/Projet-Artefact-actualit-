@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 
 # %%
 # putting all articles in a Dataframe, adding year, day, and size
-path = "./cleaned_articles"
+path = "./data/articles"
 
 import os
 import json
@@ -43,7 +43,7 @@ years = os.listdir(path)
 
 for year in years:
     for filename in os.listdir(path + "/" + year):
-        f = open("./cleaned_articles/" + year + "/" + filename, 'r')
+        f = open(path+"/" + year + "/" + filename, 'r')
         json_document = f.read()
         json_document = json.loads(json_document)
         all_json_documents.append(json_document)
@@ -103,5 +103,3 @@ print("proportion of articles with less than 600 caracters : ", int(nb_less_600*
 
 nb_less_800 = len(articles_df[articles_df['size'] < 800])
 print("proportion of articles with less than 800 caracters : ", int(nb_less_800*100/nb_articles), '%')
-
-# %%
