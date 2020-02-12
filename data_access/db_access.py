@@ -32,10 +32,10 @@ class Client :
                 host = self.host,
                 port = self.port
             )
-            self.cursor = connection.cursor()
+            self.cursor = self.connection.cursor()
             
-        except Exception as error :
-            logging.error("Connection failed : "+error)
+        except (Exception, pg.Error) as error :
+            logging.error("Connection failed",error)
 
     def fetch_all_articles(self):
         """Fetch all articles in the database
@@ -49,11 +49,13 @@ class Client :
                 SELECT * FROM articles
                 '''
             )
-            records = self.cursor.fetch_all()
+            records = self.cursor.fetchall()
             articles = [Article(*record[1:]) for record in records]
             return articles
         except AttributeError as error :
-            logging.error("Connection does not exist : "+error)
+            logging.error("Connection does not exist",error)
+        except (Exception, pg.Error) as error :
+            logging.error("Unable to retrieve articles",error)
 
     def insert_article(self,article):
         """Insert the given article in the database
@@ -63,11 +65,13 @@ class Client :
         """
         try :
             insert_query = '''
-                INSERT INTO articles(title,newspaper,date,url,text)
+                INSERT INTO articles(title,newspaper,published_date,url,article_text)
                 VALUES (%s,%s,%s,%s,%s)
             '''
             values = (article.title, article.newspaper, article.date, article.url, article.text)
             self.cursor.execute(insert_query,values)
             self.connection.commit()
         except AttributeError as error :
-            logging.error("Connection does not exist : "+error)
+            logging.error("Connection does not exist",error)
+        except (Exception, pg.Error) as error :
+            logging.error("Unable to insert",error)

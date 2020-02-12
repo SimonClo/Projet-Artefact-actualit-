@@ -6,4 +6,5 @@ bot/Token_fb.txt
 bot/env
 .vscode
 data/*
+data_access/db_dumps/*
 __pycache__
