@@ -109,6 +109,8 @@ for topic in topics:
 # ## Work on several articles
 
 
+
+
 # +
 articles = []
 titles = []
@@ -132,6 +134,7 @@ for year in os.listdir('./cleaned_articles/'):
                     articles.append(text)
     
 dictionary2 = corpora.Dictionary(articles)
+dictionary2.filter_extremes(no_below=0.8)
 corpus2 = [dictionary2.doc2bow(article) for article in articles]
 pickle.dump(corpus2, open('corpus2.pkl', 'wb'))
 dictionary2.save('dictionary2.gensim')
@@ -144,7 +147,8 @@ print('Done')
 # +
 print('...')
 
-NUM_TOPICS = 5
+NUM_TOPICS = 7
+
 ldamodel2 = gensim.models.ldamodel.LdaModel(
     corpus2, num_topics = NUM_TOPICS, id2word=dictionary2, passes=15, per_word_topics=True, update_every=1
 )
@@ -185,7 +189,7 @@ print('\nCoherence Score: ', coherence_lda)
 
 # Download File: http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip
 mallet_path = './mallet-2.0.8/bin/mallet'
-ldamallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus2, num_topics=5, id2word=dictionary2)
+ldamallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus2, num_topics=10, id2word=dictionary2)
 
 
 # Show Topics
