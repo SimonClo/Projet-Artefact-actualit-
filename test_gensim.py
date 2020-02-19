@@ -108,6 +108,12 @@ for topic in topics:
 # -
 # ## Work on several articles
 
+# +
+# Choose the parametres
+
+nb_articles = 10000
+words_no_below = 0.8
+NUM_TOPICS = 4
 
 
 
@@ -118,7 +124,7 @@ print('...')
 for year in os.listdir('./cleaned_articles/'):
     if year != '.DS_Store':
         for filename in os.listdir('./cleaned_articles/'+year):
-            if (len(articles)<10000):
+            if (len(articles)<nb_articles):
                     path = './cleaned_articles/'+year+'/'+filename
                     file = open(path, 'r')
                     read_file = json.loads(file.read())[0]
@@ -134,23 +140,57 @@ for year in os.listdir('./cleaned_articles/'):
                     articles.append(text)
     
 dictionary2 = corpora.Dictionary(articles)
-dictionary2.filter_extremes(no_below=0.8)
+dictionary2.filter_extremes(no_below=words_no_below)
 corpus2 = [dictionary2.doc2bow(article) for article in articles]
 pickle.dump(corpus2, open('corpus2.pkl', 'wb'))
 dictionary2.save('dictionary2.gensim')
-print('Done')
+print('Done', len(corpus2))
 # -
 
 
 # ### Create différent topics with gensim
 
 # +
+# Create the topics
+import numpy as np
+
+
+#print(dictionary2.token2id['carbon'])
+
+
+# function to enter the topic in eta
+def add_topic_to_eta(words, topic_nb, eta):
+    print('Topic number '+str(topic_nb))
+    for word in words:
+        eta[topic_nb, dictionary2.token2id[word]]=1
+
+def create_eta(topics):
+    eta = np.zeros((NUM_TOPICS, len(dictionary2)))
+    if NUM_TOPICS != len(topics):
+        print('Not the right number of topics ! You should create '+str(NUM_TOPICS)+' topics. There are '+ str(len(dictionary2)))
+    else:
+        print('Right number of topics')
+        topic_nb = 0
+        for topic in topics:
+            add_topic_to_eta(topic, topic_nb, eta)
+            topic_nb += 1
+    return eta
+            
+# Topic 1
+words_war = ['guerr', 'etat', 'polit', 'président', 'arme']
+words_politics = ['ministr', 'president', 'polit', 'franc', 'gouvern']
+words_greve = ['emplois', 'chômag', 'grev', 'social', 'manifest']
+words_ecology = ['durabl', 'planet', 'vert', 'ecolo', 'carbon']
+
+topics = [words_war, words_politics, words_greve, words_ecology]
+eta = create_eta(topics)
+print(eta.shape)
+
+# +
 print('...')
 
-NUM_TOPICS = 7
-
 ldamodel2 = gensim.models.ldamodel.LdaModel(
-    corpus2, num_topics = NUM_TOPICS, id2word=dictionary2, passes=15, per_word_topics=True, update_every=1
+    corpus2, num_topics = NUM_TOPICS, id2word=dictionary2, passes=10, per_word_topics=True, update_every=1, iterations=50, eta=eta
 )
 ldamodel2.save('model2.gensim')
 
