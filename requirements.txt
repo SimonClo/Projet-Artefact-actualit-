@@ -1,0 +1,5 @@
+Flask
+flask-migrate
+dialogflow
+requests
+jsonify

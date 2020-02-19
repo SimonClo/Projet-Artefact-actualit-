@@ -56,18 +56,7 @@ def webhook():
 
 @app.route('/webhook_df', methods=['POST'])
 def webhook_df():
-    data = request.get_json(silent=True)
-    if data['queryResult']['queryText'] == 'oui':
-        reply = {
-            "fulfillmentText": "Ok. Tickets booked successfully.",
-        }
-        return jsonify(reply)
-
-    elif data['queryResult']['queryText'] == 'article':
-        reply = {
-            "fulfillmentText": "Ok. Booking cancelled.",
-        }
-        return jsonify(reply)
+    return {}
 
 def handle_message(sender_psid, received_message):
     resp = {}
@@ -76,6 +65,7 @@ def handle_message(sender_psid, received_message):
 
     if 'text' in received_message:
         intent = act_man.get_intent(received_message['text'])
+        print(intent)
         action = act_man.next_action(user, intent)
         user.prev_action = action
         db.session.commit()

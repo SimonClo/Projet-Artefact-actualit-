@@ -26,8 +26,6 @@ class ActionManager:
         if user.prev_action in ActionManager.next_json:
             if intent in ActionManager.next_json[user.prev_action]:
                 return ActionManager.next_json[user.prev_action][intent]
-            #elif intent == 'unknown':
-            #    return 'welcome'
             else:
                 return 'welcome'
                 #raise ValueError('Intent unknown')
