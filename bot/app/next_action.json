@@ -1,0 +1,23 @@
+{
+  "welcome": {
+    "oui": "article",
+    "non": "explanation"
+  },
+  "article": {
+    "article": "article",
+    "archive": "archive",
+    "non": "explanation"
+  },
+  "archive": {
+    "archive": "archive",
+    "article": "article",
+    "non": "explanation"
+  },
+  "explanation": {
+    "oui": "explanation_yes",
+    "non": "welcome"
+  },
+  "explanation_yes": {
+    "ok": "welcome"
+  }
+}

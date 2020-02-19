@@ -1,5 +1,8 @@
 from flask import request
 import requests
+import dialogflow
+import jsonify
+import os
 
 from app import app, db
 
@@ -51,6 +54,20 @@ def webhook():
         else:
             return "nope", 403
 
+@app.route('/webhook_df', methods=['POST'])
+def webhook_df():
+    data = request.get_json(silent=True)
+    if data['queryResult']['queryText'] == 'oui':
+        reply = {
+            "fulfillmentText": "Ok. Tickets booked successfully.",
+        }
+        return jsonify(reply)
+
+    elif data['queryResult']['queryText'] == 'article':
+        reply = {
+            "fulfillmentText": "Ok. Booking cancelled.",
+        }
+        return jsonify(reply)
 
 def handle_message(sender_psid, received_message):
     resp = {}

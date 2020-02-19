@@ -1,49 +1,36 @@
 import json
+import dialogflow
+import os
 
 class ActionManager:
+    with open('app/next_action.json') as json_data:
+        next_json = json.load(json_data)
 
     def __init__(self):
         pass
 
     def get_intent(self, message):
         # à modifier en intégrant à Dialogflow
-        return message.lower()
+        project_id = os.getenv('DIALOGFLOW_PROJECT_ID')
+        session_client = dialogflow.SessionsClient()
+        session = session_client.session_path(project_id, "unique")
+
+        text_input = dialogflow.types.TextInput(
+            text=message, language_code='fr')
+        query_input = dialogflow.types.QueryInput(text=text_input)
+        response = session_client.detect_intent(
+            session=session, query_input=query_input)
+        return response.query_result.fulfillment_text
 
     def next_action(self, user, intent):
-        if user.prev_action == 'welcome':
-            if intent == 'oui':
-                return 'article'
-            elif intent == 'non':
-                return 'explanation'
+        if user.prev_action in ActionManager.next_json:
+            if intent in ActionManager.next_json[user.prev_action]:
+                return ActionManager.next_json[user.prev_action][intent]
+            #elif intent == 'unknown':
+            #    return 'welcome'
             else:
                 return 'welcome'
-        elif user.prev_action == 'article':
-            if intent == 'article':
-                return 'article'
-            elif intent == 'archive':
-                return 'archive'
-            elif intent == 'non':
-                return 'explanation'
-            else:
-                return 'welcome'
-        elif user.prev_action == 'archive':
-            if intent == 'archive':
-                return 'archive'
-            elif intent == 'article':
-                return 'article'
-            elif intent == 'explanation':
-                return 'explanation'
-            else:
-                return 'welcome'
-        elif user.prev_action == 'explanation':
-            if intent == 'oui':
-                return 'explanation_yes'
-            elif intent =='non':
-                return 'welcome'
-            else:
-                return 'welcome'
-        elif user.prev_action == 'explanation_yes':
-            return 'welcome'
+                #raise ValueError('Intent unknown')
 
 
 class Action:
