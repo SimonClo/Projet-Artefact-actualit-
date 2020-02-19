@@ -5,7 +5,7 @@ import json
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from data_access.db_access import Client
-from data_access.models import Article
+from data_access.models import RawArticle
 import config
 
 
@@ -20,7 +20,7 @@ def parse_articles(filepath) :
                 date = filename.split(".")[0]
                 newspaper = filepath.split("/")[-1]
                 url = article['url']
-                articles.append(Article(title,newspaper,date,url,text))
+                articles.append(RawArticle(title,newspaper,date,url,text))
     return articles
 
 def insert_all_articles(client,articles) :

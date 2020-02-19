@@ -1,5 +1,4 @@
 import psycopg2 as pg 
-from models import Article
 import logging
 import pickle as pkl
 import os
@@ -8,6 +7,7 @@ import argparse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from utils.models import RawArticle
 import config
 
 def main(argv):
@@ -70,7 +70,8 @@ class Client :
                 '''
             )
             records = self.cursor.fetchall()
-            articles = [Article(*record[1:]) for record in records]
+            articles = [RawArticle(*record[1:]) for record in records]
+            if config.DEV_MODE : articles = articles[:config.DEV_MODE_ITERATIONS]
             return articles
         except AttributeError as error :
             logging.error("Connection does not exist",error)
