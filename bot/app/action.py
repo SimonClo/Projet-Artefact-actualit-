@@ -2,6 +2,8 @@ import json
 import dialogflow
 import os
 
+PROJECT_ID = os.getenv('DIALOGFLOW_PROJECT_ID')
+
 class ActionManager:
     with open('app/next_action.json') as json_data:
         next_json = json.load(json_data)
@@ -11,9 +13,8 @@ class ActionManager:
 
     def get_intent(self, message):
         # à modifier en intégrant à Dialogflow
-        project_id = os.getenv('DIALOGFLOW_PROJECT_ID')
         session_client = dialogflow.SessionsClient()
-        session = session_client.session_path(project_id, "unique")
+        session = session_client.session_path(PROJECT_ID, "unique")
 
         text_input = dialogflow.types.TextInput(
             text=message, language_code='fr')
