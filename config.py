@@ -10,3 +10,7 @@ DB_PASSWORD = "postgres"
 
 DEV_MODE = True
 DEV_MODE_ITERATIONS = 10
+
+# Matching variables
+
+NUM_MATCHES = 10
