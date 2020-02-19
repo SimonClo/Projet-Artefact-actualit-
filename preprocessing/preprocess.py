@@ -89,7 +89,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("inpath",help="path of the input file")
     parser.add_argument("outpath",help="path of the output file")
-    parser.add_argument("--log",help="log level <DEBUG|INFO|WARNING|ERROR|CRITICAL>")
     args = parser.parse_args()
     main(args)
 
