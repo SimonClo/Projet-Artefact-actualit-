@@ -1,6 +1,26 @@
 import psycopg2 as pg 
-from data_access.models import Article
+from models import Article
 import logging
+import pickle as pkl
+import os
+import sys
+import argparse
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import config
+
+def main(argv):
+    """Store all articles in a binary file
+    
+    Arguments:
+        argv {list(string)} -- string args, must provide path attribute
+    """
+    client = Client(config.DB_HOST,config.DB_PORT,config.DB_NAME)
+    client.connect(config.DB_USER,config.DB_PASSWORD)
+    issues = client.fetch_all_articles()
+    with open(argv.path,"wb") as f:
+        pkl.dump(issues,f)
 
 class Client :
     """Database client to easily insert and fetch articles
@@ -75,3 +95,9 @@ class Client :
             logging.error("Connection does not exist",error)
         except (Exception, pg.Error) as error :
             logging.error("Unable to insert",error)
+
+if __name__ == "__main__" :
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path",help="path to store binary articles in")
+    args = parser.parse_args()
+    main(args)
