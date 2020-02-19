@@ -429,6 +429,16 @@ sent_topics_sorteddf_mallet.head()
 # %% [markdown]
 # ### Getting scores for all documents
 
+# %%
+scores = []
+
+for doc_model in ldamodel2[corpus2] :
+    score = []
+    for doc_score in doc_model[0] :
+        score.append(doc_score[1])
+    scores.append(score)
+    
+print(scores[:10])
 
 # %%
 scores = []
