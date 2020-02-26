@@ -28,10 +28,6 @@ def handle_message(sender_psid, received_message):
 def handle_postback(sender_psid, received_postback):
     payload = received_postback['payload']
     resp = {}
-    if payload == 'yes':
-        resp['text'] = 'Merci'
-    elif payload == 'no':
-        resp['text'] = 'Renvoyez une photo svp'
 
     callSendAPI(sender_psid, resp)
 
@@ -40,7 +36,7 @@ def callSendAPI(sender_psid, response):
         "recipient": {"id": sender_psid},
         "message": response
     }
-    auth= {"access_token": PAGE_ACCESS_TOKEN}
+    auth = {"access_token": PAGE_ACCESS_TOKEN}
     req = requests.post(FB_API_URL, params=auth, json=request_body)
 
     return req.json()

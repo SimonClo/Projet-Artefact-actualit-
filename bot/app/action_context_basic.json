@@ -1,0 +1,28 @@
+[
+  {
+    "Action": "welcome",
+    "Context": "",
+    "Message": ["Bonjour! Je suis le bot archiviste, voulez-vous un 1er article ?",
+      "Bienvenue! Je suis le bot archiviste, je vous envoie un article ?"],
+    "Quick Replies": ["Oui","Non"]
+  },
+  {
+    "Action": "welcome",
+    "Context": "repeat",
+    "Message": ["En quoi puis-je vous \u00eatre utile ?"],
+    "Quick Replies": ["Article","Explication"]
+  },
+  {
+    "Action": "explanation",
+    "Context": "",
+    "Message": ["Voulez-vous que je vous explique mon fonctionnement ?",
+    "Je peux vous expliquer comment je marche si vous le souhaitez"],
+    "Quick Replies": ["Oui","Non"]
+  },
+  {
+    "Action": "explanation_yes",
+    "Context": "",
+    "Message": ["Je suis le Petit Archiviste, je peux vous pr\u00e9senter des articles d'actualit\u00e9 puis vous proposer des articles d'archives en lien avec ceux-ci"],
+    "Quick Replies": ["Ok"]
+  }
+]

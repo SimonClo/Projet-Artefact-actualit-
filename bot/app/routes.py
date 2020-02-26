@@ -24,6 +24,7 @@ def webhook():
                     db.session.add(user)
                     db.session.commit()
                 if 'message' in webhook_event:
+                    print(sender_psid)
                     handle_message(sender_psid,webhook_event['message'])
                 elif 'postback' in webhook_event:
                     handle_postback(sender_psid,webhook_event['postback'])
