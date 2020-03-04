@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
+# %% [markdown]
 # # Tests of topic modelling with gensim
 
+# %% [markdown]
 # ### Import data
 
-# + {"active": ""}
+# %% [raw]
 # Ressources
 #
 # https://www.machinelearningplus.com/nlp/topic-modeling-gensim-python/
 
-# +
+# %%
 import os
 import json
 from nltk import word_tokenize
@@ -35,13 +37,13 @@ import pandas as pd
 stemmer = FrenchStemmer()
 
 
-# +
+# %%
 #pip install stop-words
-# -
 
+# %% [markdown]
 # ### Create list of stop words
 
-# +
+# %%
 stop_words = set(stopwords.words('french'))
 
 # add stop words
@@ -56,15 +58,16 @@ stop_words_to_add += get_stop_words('fr')
 
 for word in stop_words_to_add:
     stop_words.add(word)
-# -
 
+# %% [markdown]
 # ## Work on one article
 
+# %% [markdown]
 # ### Remove stop words and ponctuation
 
-# +
+# %%
 # Create a list of words of first article
-file = open('cleaned_articles/1956/13_01_1956.json', 'r')
+file = open('./data/L\'express/1956/13_01_1956.json', 'r')
 read_file = json.loads(file.read())[0]['text']
 
 
@@ -75,17 +78,19 @@ text = word_tokenize(text)
 # remove stop words
 text = [word.lower() for word in text if word.lower() not in stop_words]
 
-# -
 
+# %% [markdown]
 # ### Lemmatization
 
+# %%
 text = [stemmer.stem(word) for word in text]
 text = [word for word in text if len(word)>3]
 print(text)
 
+# %% [markdown]
 # ### Create corpus and dictionary
 
-# +
+# %%
 # Create a dictionary, wich contains only words (tokens)
 dictionary = corpora.Dictionary([text])
 
@@ -97,7 +102,7 @@ corpus = [dictionary.doc2bow((token) for token in text)]
 pickle.dump(corpus, open('corpus.pkl', 'wb'))
 dictionary.save('dictionary.gensim')
 
-# +
+# %%
 NUM_TOPICS = 4
 ldamodel = gensim.models.ldamodel.LdaModel(corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=15)
 ldamodel.save('model5.gensim')
@@ -105,52 +110,106 @@ ldamodel.save('model5.gensim')
 topics = ldamodel.print_topics(num_words=5)
 for topic in topics:
     print(topic)
-# -
+# %% [markdown]
 # ## Work on several articles
 
-
 # +
+# Choose the parametres
+
+nb_articles = 10000
+words_no_below = 0.8
+NUM_TOPICS = 4
+
+# %% [markdown]
+# First we create a Bag of Words representation of the articles :
+
+# %%
 from gensim import corpora
 from gensim.utils import simple_preprocess
 import pickle
 
+
+
+# +
 articles = []
 titles = []
 print('...')
-for year in os.listdir('./cleaned_articles/'):
+for year in os.listdir('./data/L\'express/'):
     if year != '.DS_Store':
-        for filename in os.listdir('./cleaned_articles/'+year):
-            if (len(articles)<10000):
-                    path = './cleaned_articles/'+year+'/'+filename
-                    file = open(path, 'r')
-                    read_file = json.loads(file.read())[0]
-                    titles.append(read_file['title'])
-                    read_file = read_file['text']
+        for filename in os.listdir('./data/L\'express/'+year):
+            if (len(articles)<2000):
+                path = './data/L\'express/'+year+'/'+filename
+                file = open(path, 'r')
+                read_file = json.loads(file.read())
+                for article in read_file :
+                    titles.append(article['title'])
+                    article_text = article['text']
 
                     #removing punctuation, stop words and lemmatize
-                    text = "".join([char if (char.isalnum() or char==" ") else " " for char in read_file])
+                    text = "".join([char if (char.isalnum() or char==" ") else " " for char in article_text])
                     text = word_tokenize(text)
                     text = [word.lower() for word in text if word.lower() not in stop_words]
                     text = [stemmer.stem(word) for word in text]
                     text = [word for word in text if len(word)>3 and word not in stop_words]
                     articles.append(text)
-    
+
+print(len(articles))
 dictionary2 = corpora.Dictionary(articles)
+dictionary2.filter_extremes(no_below=words_no_below)
 corpus2 = [dictionary2.doc2bow(article) for article in articles]
 pickle.dump(corpus2, open('corpus2.pkl', 'wb'))
 dictionary2.save('dictionary2.gensim')
 print('Done')
-# -
 
 
+# %%
+print(titles[1446])
+
+# %% [markdown]
 # ### Create différent topics with gensim
+
+# +
+# Create the topics
+import numpy as np
+
+
+#print(dictionary2.token2id['carbon'])
+
+
+# function to enter the topic in eta
+def add_topic_to_eta(words, topic_nb, eta):
+    print('Topic number '+str(topic_nb))
+    for word in words:
+        eta[topic_nb, dictionary2.token2id[word]]=1
+
+def create_eta(topics):
+    eta = np.zeros((NUM_TOPICS, len(dictionary2)))
+    if NUM_TOPICS != len(topics):
+        print('Not the right number of topics ! You should create '+str(NUM_TOPICS)+' topics. There are '+ str(len(dictionary2)))
+    else:
+        print('Right number of topics')
+        topic_nb = 0
+        for topic in topics:
+            add_topic_to_eta(topic, topic_nb, eta)
+            topic_nb += 1
+    return eta
+            
+# Topic 1
+words_war = ['guerr', 'etat', 'polit', 'président', 'arme']
+words_politics = ['ministr', 'president', 'polit', 'franc', 'gouvern']
+words_greve = ['emplois', 'chômag', 'grev', 'social', 'manifest']
+words_ecology = ['durabl', 'planet', 'vert', 'ecolo', 'carbon']
+
+topics = [words_war, words_politics, words_greve, words_ecology]
+eta = create_eta(topics)
+print(eta.shape)
 
 # +
 print('...')
 
-NUM_TOPICS = 5
 ldamodel2 = gensim.models.ldamodel.LdaModel(
-    corpus2, num_topics = NUM_TOPICS, id2word=dictionary2, passes=15, per_word_topics=True, update_every=1
+    corpus2, num_topics = NUM_TOPICS, id2word=dictionary2, passes=15, per_word_topics=True, update_every=1,
+    minimum_probability=0, iterations=50
 )
 ldamodel2.save('model2.gensim')
 
@@ -162,20 +221,34 @@ topics2 = ldamodel2.print_topics(num_words=10)
 for topic in topics2:
     print(topic)
     print()
-# -
+# %% [markdown]
+# ### Loading model
+
+# %%
+with open("./corpus2.pkl","rb") as f:
+    corpus2 = pickle.load(f)
+ldamodel2 = gensim.models.ldamodel.LdaModel.load('./model2.gensim')
+dictionary2 = gensim.corpora.dictionary.Dictionary.load("./dictionary2.gensim")
+
+# %%
+print(ldamodel2[corpus2[0]])
+
+# %% [markdown]
 # ### Plot topics
 
+# %%
 # Visualize the topics
 pyLDAvis.enable_notebook()
 vis = pyLDAvis.gensim.prepare(ldamodel2, corpus2, dictionary2)
 vis
 
+# %% [markdown]
 # ### Coherence and perplexity of this model
 
-# +
+# %%
 #pip install pyLDAvis
 
-# +
+# %%
 # Compute Perplexity
 print('\nPerplexity: ', ldamodel2.log_perplexity(corpus2))  # a measure of how good the model is. lower the better.
 
@@ -183,28 +256,33 @@ print('\nPerplexity: ', ldamodel2.log_perplexity(corpus2))  # a measure of how g
 coherence_model_lda = CoherenceModel(model=ldamodel2, texts=articles, dictionary=dictionary2, coherence='c_v')
 coherence_lda = coherence_model_lda.get_coherence()
 print('\nCoherence Score: ', coherence_lda)
-# -
 
+# %% [markdown]
 # ## Create topics with mallet 
 
+# %%
 # Download File: http://mallet.cs.umass.edu/dist/mallet-2.0.8.zip
 mallet_path = './mallet-2.0.8/bin/mallet'
-ldamallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus2, num_topics=5, id2word=dictionary2)
+ldamallet = gensim.models.wrappers.LdaMallet(mallet_path, corpus=corpus2, num_topics=10, id2word=dictionary2)
 
 
+# %%
 # Show Topics
 for topic in ldamallet.show_topics(formatted=False):
     print(topic)
     print()
 
+# %%
 #Coherence
 coherence_model_ldamallet = CoherenceModel(model=ldamallet, texts=articles, dictionary=dictionary2, coherence='c_v')
 coherence_ldamallet = coherence_model_ldamallet.get_coherence()
 print('\nCoherence Score: ', coherence_ldamallet)
 
 
+# %% [markdown]
 # ## Find optimal mallet model
 
+# %%
 def compute_coherence_values(limit, start=2, step=3):
     """
     Compute c_v coherence for various number of topics
@@ -234,12 +312,14 @@ def compute_coherence_values(limit, start=2, step=3):
     return model_list, coherence_values
 
 
+# %%
 # Can take a long time to run.
 limit=20
 start=2
 step=2
 model_list, coherence_values = compute_coherence_values(start=start, limit=limit, step=step)
 
+# %%
 # Show graph
 x = range(start, limit, step)
 plt.plot(x, coherence_values)
@@ -248,11 +328,13 @@ plt.ylabel("Coherence score")
 plt.legend(("coherence_values"), loc='best')
 plt.show()
 
+# %% [markdown]
 #
 
+# %% [markdown]
 # ### Give a document and find his dominant topic
 
-# +
+# %%
 # Get document you want to see (last document)
 # Create a list of words of first article
 #file3 = open('cleaned_articles/1999/22_07_1999.json', 'r')
@@ -281,8 +363,8 @@ dictionary3 = corpora.Dictionary([text3])
 # Create corpus with data
 corpus3 = [dictionary3.doc2bow((token) for token in text3)]
 
-# -
 
+# %%
 def format_topics_sentences(ldamodel, corpus, texts):
     # Init output
     sent_topics_df = pd.DataFrame()
@@ -307,21 +389,22 @@ def format_topics_sentences(ldamodel, corpus, texts):
     return(sent_topics_df)
 
 
+# %%
 df_topic_sents_keywords = format_topics_sentences(ldamodel=ldamallet, corpus=corpus3, texts=title3)
 
-# +
+# %%
 # Format
 df_dominant_topic = df_topic_sents_keywords.reset_index()
 df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Text']
 
 # Show
 df_dominant_topic.head(15)
-# + {}
+# %%
 
 
 df_topic_sents_keywords_2 = format_topics_sentences(ldamodel=ldamallet, corpus=corpus2, texts=titles)
 
-# +
+# %%
 # Group top 5 sentences under each topic
 sent_topics_sorteddf_mallet = pd.DataFrame()
 
@@ -340,9 +423,34 @@ sent_topics_sorteddf_mallet.columns = ['Topic_Num', "Topic_Perc_Contrib", "Keywo
 
 # Show
 sent_topics_sorteddf_mallet.head()
-# + {}
+# %%
 #Future work to do
 # Grid search, search best parameters with sklearn (see mail of Louise)
-# -
+# %% [markdown]
+# ### Getting scores for all documents
 
+# %%
+scores = []
 
+for doc_model in ldamodel2[corpus2] :
+    score = []
+    for doc_score in doc_model[0] :
+        score.append(doc_score[1])
+    scores.append(score)
+    
+print(scores[:10])
+
+# %%
+scores = []
+
+for doc_model in ldamodel2[corpus2] :
+    score = []
+    for doc_score in doc_model[0] :
+        score.append(doc_score[1])
+    scores.append(score)
+    
+print(scores[:10])
+
+# %%
+with open("scores.pkl","wb") as file :
+    pickle.dump(scores,file)

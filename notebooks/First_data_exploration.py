@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 
 # %%
 # putting all articles in a Dataframe, adding year, day, and size
-path = "./data/articles"
+path = "./data/L'express"
 
 import os
 import json
