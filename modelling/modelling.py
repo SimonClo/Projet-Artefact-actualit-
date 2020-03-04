@@ -13,7 +13,9 @@ import numpy as np
 import pyLDAvis
 import pyLDAvis.gensim 
 
-from tf_idf import get_articles_keywords
+from modelling.tf_idf import get_articles_keywords
+
+logger = logging.getLogger(__name__)
 
 def get_titles_and_texts(corpus):
     titles = []
@@ -21,7 +23,7 @@ def get_titles_and_texts(corpus):
     for article in corpus.articles:
         titles.append(article.title)
         articles.append(article.tokens)
-    logging.info('Created titles and articles')
+    logger.info('Created titles and articles')
     return (titles, articles)
 
 def get_scores_from_documents_topics_matrix(documents_topics, nb_topics, corpus):
@@ -65,25 +67,25 @@ def main(inpath, outpath_model, outpath_scores):
     dictionary = corpora.Dictionary(articles)
     dictionary.filter_extremes(no_above=words_no_above)
     corpus = [dictionary.doc2bow(article) for article in articles]
-    logging.info('Created dictionary and corpus')
+    logger.info('Created dictionary and corpus')
 
     # create lda model with gensim
     ldamodel = gensim.models.ldamodel.LdaModel(
     corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=10, per_word_topics=True, update_every=1, iterations=50
     )
-    logging.info('Created gensim model')
+    logger.info('Created gensim model')
 
     # print the topics (debug)
-    logging.info('Topics:')
+    logger.info('Topics:')
     topics = ldamodel.print_topics(num_words=5)
     for topic in topics:
-        logging.info(topic)
+        logger.info(topic)
 
     # Plot topics in a nice way (work in process ...)
 
     # save model in given outpath file
     ldamodel.save(outpath_model)
-    logging.info('Saved the model in '+outpath_model)
+    logger.info('Saved the model in '+outpath_model)
 
     # get topics and keywords
     get_document_topics = ldamodel.get_document_topics(corpus, minimum_probability=0.0)

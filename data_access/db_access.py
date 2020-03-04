@@ -9,7 +9,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from utils.models import RawArticle
 
-def main(outpath, host, port, user, password, db_name):
+logger = logging.getLogger(__name__)
+
+def main(outpath, host, port, user, password, db_name, dev=False, dev_iterations=10):
     """Store all archives in a binary file
     
     Arguments:
@@ -17,7 +19,8 @@ def main(outpath, host, port, user, password, db_name):
     """
     client = Client(host, port, db_name)
     client.connect(user, password)
-    issues = client.fetch_all_archives()
+    logger.info("fetching archives")
+    issues = client.fetch_all_archives(dev, dev_iterations)
     with open(outpath,"wb") as f:
         pkl.dump(issues,f)
 
@@ -54,9 +57,9 @@ class Client :
             self.cursor = self.connection.cursor()
             
         except (Exception, pg.Error):
-            logging.error("Connection failed")
+            logger.error("Connection failed")
 
-    def fetch_all_archives(self, dev=False, dev_iterations=10):
+    def fetch_all_archives(self, dev, dev_iterations):
         """Fetch all archives in the database
         
         Returns:
@@ -73,9 +76,9 @@ class Client :
             if dev : archives = archives[:dev_iterations]
             return archives
         except AttributeError:
-            logging.error("Connection does not exist")
+            logger.error("Connection does not exist")
         except (Exception, pg.Error):
-            logging.error("Unable to retrieve archives")
+            logger.error("Unable to retrieve archives")
 
     def insert_archive(self,article):
         """Insert the given article in the database
@@ -92,9 +95,9 @@ class Client :
             self.cursor.execute(insert_query,values)
             self.connection.commit()
         except AttributeError:
-            logging.error("Connection does not exist")
+            logger.error("Connection does not exist")
         except (Exception, pg.Error):
-            logging.error("Unable to insert")
+            logger.error("Unable to insert")
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()

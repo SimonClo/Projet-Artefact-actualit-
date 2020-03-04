@@ -12,6 +12,8 @@ from stop_words import get_stop_words
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.models import RawArticle, SplitArticle, ProcessedCorpus
 
+logger = logging.getLogger(__name__)
+
 def main(inpath, outpath):
     """Split raw articles and preprocess them
     
@@ -40,15 +42,15 @@ def main(inpath, outpath):
 
     # processing articles
     split_articles = []
-    logging.info("tokenizing articles")
+    logger.info("tokenizing articles")
     for article in articles:
         split_text = tokenize(article.text)
         split_articles.append(SplitArticle(article.id,article.title,article.newspaper,article.date,article.url,split_text))
     corpus = ProcessedCorpus(split_articles)
-    logging.info("removing stop words")
+    logger.info("removing stop words")
     corpus.apply_to_tokens_in_articles(lambda text: text.lower())
     corpus.apply_to_articles(lambda tokens: remove_stop_words(tokens,stop_words))
-    logging.info("applying lemmatization")
+    logger.info("applying lemmatization")
     corpus.apply_to_tokens_in_articles(lemmatize)
     corpus.apply_to_articles(lambda tokens: remove_stop_words(tokens,stop_words))
 
