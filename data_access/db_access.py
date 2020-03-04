@@ -11,19 +11,19 @@ from utils.models import RawArticle
 import config
 
 def main(argv):
-    """Store all articles in a binary file
+    """Store all archives in a binary file
     
     Arguments:
         argv {list(string)} -- string args, must provide path attribute
     """
     client = Client(config.DB_HOST,config.DB_PORT,config.DB_NAME)
     client.connect(config.DB_USER,config.DB_PASSWORD)
-    issues = client.fetch_all_articles()
+    issues = client.fetch_all_archives()
     with open(argv.path,"wb") as f:
         pkl.dump(issues,f)
 
 class Client :
-    """Database client to easily insert and fetch articles
+    """Database client to easily insert and fetch archives
     """
     def __init__(self,host,port,database):
         """Creates a client pointing to the given database
@@ -54,31 +54,31 @@ class Client :
             )
             self.cursor = self.connection.cursor()
             
-        except (Exception, pg.Error) as error :
-            logging.error("Connection failed",error)
+        except (Exception, pg.Error):
+            logging.error("Connection failed")
 
-    def fetch_all_articles(self):
-        """Fetch all articles in the database
+    def fetch_all_archives(self):
+        """Fetch all archives in the database
         
         Returns:
-            list(Articles) -- a list of article objects
+            list(archives) -- a list of article objects
         """
         try :
             self.cursor.execute(
                 '''
-                SELECT * FROM articles
+                SELECT id, title, newspaper, published_date, url, article_text FROM archives
                 '''
             )
             records = self.cursor.fetchall()
-            articles = [RawArticle(*record[1:]) for record in records]
-            if config.DEV_MODE : articles = articles[:config.DEV_MODE_ITERATIONS]
-            return articles
-        except AttributeError as error :
-            logging.error("Connection does not exist",error)
-        except (Exception, pg.Error) as error :
-            logging.error("Unable to retrieve articles",error)
+            archives = [RawArticle(*record) for record in records]
+            if config.DEV_MODE : archives = archives[:config.DEV_MODE_ITERATIONS]
+            return archives
+        except AttributeError:
+            logging.error("Connection does not exist")
+        except (Exception, pg.Error):
+            logging.error("Unable to retrieve archives")
 
-    def insert_article(self,article):
+    def insert_archive(self,article):
         """Insert the given article in the database
         
         Arguments:
@@ -86,19 +86,19 @@ class Client :
         """
         try :
             insert_query = '''
-                INSERT INTO articles(title,newspaper,published_date,url,article_text)
+                INSERT INTO archives(title,newspaper,published_date,url,article_text)
                 VALUES (%s,%s,%s,%s,%s)
             '''
             values = (article.title, article.newspaper, article.date, article.url, article.text)
             self.cursor.execute(insert_query,values)
             self.connection.commit()
-        except AttributeError as error :
-            logging.error("Connection does not exist",error)
-        except (Exception, pg.Error) as error :
-            logging.error("Unable to insert",error)
+        except AttributeError:
+            logging.error("Connection does not exist")
+        except (Exception, pg.Error):
+            logging.error("Unable to insert")
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("path",help="path to store binary articles in")
+    parser.add_argument("path",help="path to store binary archives in")
     args = parser.parse_args()
     main(args)

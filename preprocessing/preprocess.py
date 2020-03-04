@@ -38,7 +38,7 @@ def main(argv):
     logging.info("tokenizing articles")
     for article in articles:
         split_text = tokenize(article.text)
-        split_articles.append(SplitArticle(article.title,article.newspaper,article.date,article.url,split_text))
+        split_articles.append(SplitArticle(article.id,article.title,article.newspaper,article.date,article.url,split_text))
     corpus = ProcessedCorpus(split_articles)
     logging.info("removing stop words")
     corpus.apply_to_tokens_in_articles(lambda text: text.lower())
