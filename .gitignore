@@ -7,6 +7,7 @@ bot/env
 .vscode
 data/*
 data_access/db_dumps/*
+!data_access/db_dumps/init.sql
 __pycache__
 *.gensim
 *.gensim.*
