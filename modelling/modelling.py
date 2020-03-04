@@ -13,6 +13,8 @@ import numpy as np
 import pyLDAvis
 import pyLDAvis.gensim 
 
+from tf_idf import get_articles_keywords
+
 def get_titles_and_texts(corpus):
     titles = []
     articles = []
@@ -23,11 +25,19 @@ def get_titles_and_texts(corpus):
     return (titles, articles)
 
 def get_scores_from_documents_topics_matrix(documents_topics, nb_topics, corpus):
-    scores = np.zeros((nb_topics, len(corpus)))
+    scores = [[0]*nb_topics]*len(corpus)
     for i in range(len(corpus)):
         for j in range(nb_topics):
-            scores[j][i] = documents_topics[i][j][1]
+            scores[i][j] = documents_topics[i][j][1]
     return(scores)
+
+def get_texts_from_splited_articles(splited_articles):
+    texts = []
+    for article in splited_articles:
+        text = ' '.join(article)
+        texts.append(text)
+    return texts
+
 
 def main(argv):
     """
@@ -44,13 +54,16 @@ def main(argv):
     # Get titles and articles texts
     (titles, articles) = get_titles_and_texts(corpus)
 
+    # Get non splited texts for tf_idf
+    texts = get_texts_from_splited_articles(articles)
+
     # Choose the parametres
-    words_no_below = 0.8 # delete words that are in more than 0.8 of the articles
+    words_no_above = 0.6 # delete words that are in more than ... of the articles, works for topic modelling and keywords !
     NUM_TOPICS = 5
 
     # create dictionary and corpus
     dictionary = corpora.Dictionary(articles)
-    dictionary.filter_extremes(no_below=words_no_below)
+    dictionary.filter_extremes(no_above=words_no_above)
     corpus = [dictionary.doc2bow(article) for article in articles]
     logging.info('Created dictionary and corpus')
 
@@ -71,11 +84,20 @@ def main(argv):
     # save model in given outpath file
     ldamodel.save(argv.outpath_model)
     logging.info('Saved the model in '+argv.outpath_model)
-    
+
+    # get topics and keywords
+    get_document_topics = ldamodel.get_document_topics(corpus, minimum_probability=0.0)
+    topic_scores = get_scores_from_documents_topics_matrix(get_document_topics, NUM_TOPICS, corpus)
+
+    # get article keywords
+    keywords_scores = get_articles_keywords(texts, 20, words_no_above)
 
     # get scores and save them
-    get_document_topics = ldamodel.get_document_topics(corpus, minimum_probability=0.0)
-    scores = get_scores_from_documents_topics_matrix(get_document_topics, NUM_TOPICS, corpus)
+    scores = np.array([{'topics': topic_scores[0], 'keywords': keywords_scores[0]}])
+    for i in range(1, len(articles)):
+        scores = np.append(scores, [{'topics': topic_scores[i], 'keywords': keywords_scores[i]}], axis=0)
+    print(scores[0])
+
     with open(argv.outpath_scores,"wb") as f:
         pkl.dump(scores,f)
 
