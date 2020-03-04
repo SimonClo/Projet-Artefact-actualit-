@@ -66,11 +66,11 @@ class Client :
         try :
             self.cursor.execute(
                 '''
-                SELECT * FROM archives
+                SELECT id, title, newspaper, published_date, url, article_text FROM archives
                 '''
             )
             records = self.cursor.fetchall()
-            archives = [RawArticle(*record[1:]) for record in records]
+            archives = [RawArticle(*record) for record in records]
             if config.DEV_MODE : archives = archives[:config.DEV_MODE_ITERATIONS]
             return archives
         except AttributeError:
