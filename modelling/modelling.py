@@ -39,7 +39,7 @@ def get_texts_from_splited_articles(splited_articles):
     return texts
 
 
-def main(argv):
+def main(inpath, outpath_model, outpath_scores):
     """
     Create a lda model and save it. Give to each article a score vector and save them.
     Args:
@@ -48,7 +48,7 @@ def main(argv):
      - output path for score vector
     """
     # openning preprocessed articles
-    with open(argv.inpath,"rb") as f:
+    with open(inpath,"rb") as f:
         corpus = pkl.load(f)
 
     # Get titles and articles texts
@@ -82,8 +82,8 @@ def main(argv):
     # Plot topics in a nice way (work in process ...)
 
     # save model in given outpath file
-    ldamodel.save(argv.outpath_model)
-    logging.info('Saved the model in '+argv.outpath_model)
+    ldamodel.save(outpath_model)
+    logging.info('Saved the model in '+outpath_model)
 
     # get topics and keywords
     get_document_topics = ldamodel.get_document_topics(corpus, minimum_probability=0.0)
@@ -98,7 +98,7 @@ def main(argv):
         scores = np.append(scores, [{'topics': topic_scores[i], 'keywords': keywords_scores[i]}], axis=0)
     print(scores[0])
 
-    with open(argv.outpath_scores,"wb") as f:
+    with open(outpath_scores,"wb") as f:
         pkl.dump(scores,f)
 
 
@@ -108,4 +108,4 @@ if __name__ == "__main__" :
     parser.add_argument("outpath_model",help="path to store the model in")
     parser.add_argument("outpath_scores",help="path to store articles scores in")
     args = parser.parse_args()
-    main(args)
+    main(args.inpath, args.outpath_model, args.outpath_scores)

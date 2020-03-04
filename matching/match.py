@@ -10,25 +10,46 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from utils.models import RawArticle, SplitArticle, ProcessedCorpus
 
-def main(argv):
-    with open(argv.new_articles_path,"rb") as f:
+def main(inpath_articles, inpath_model, inpath_corpus_scores, outpath_matches, distance):
+    """Score new processed articles using the trained model, and compare that score with the
+    score of the archives articles, using the given distance
+    
+    Arguments:
+        inpath_articles {string} -- path of the new split articles
+        inpath_model {string} -- path of the trained model
+        inpath_corpus_scores {string} -- path of the archive scores
+        outpath_matches {string} -- path where the matches should be stored
+        distance {string} -- name of the distance to be computed
+    """
+    with open(inpath_articles,"rb") as f:
         new_corpus = pkl.load(f)
-    with open(argv.model_path,"rb") as f:
+    with open(inpath_model,"rb") as f:
         model = pkl.load(f)
-    with open(argv.scores_path,"rb") as f:
+    with open(inpath_corpus_scores,"rb") as f:
         score_matrix = pkl.load(f)
     
-    distance = dispatch_distance(argv.distance)
+    distance = dispatch_distance(distance)
     article_matches = []
     for article in new_corpus.articles :
         new_score = model.score(article)
         best_matches = get_matching(score_matrix,new_score,distance,config.NUM_MATCHES)
         article_matches.append(best_matches)
     
-    with open(argv.outpath,"wb") as f:
+    with open(outpath_matches,"wb") as f:
         pkl.dump(article_matches,f)
 
 def dispatch_distance(name):
+    """Return the distance function that matches name
+    
+    Arguments:
+        name {string} -- name of the distance function
+    
+    Raises:
+        Exception: Raise an exception if the given distance is not recognized
+    
+    Returns:
+        function -- distance function
+    """
     if name=="cosine":
         return cosine_similarity
     elif name=="euclidian":
@@ -68,4 +89,4 @@ if __name__ == "__main__" :
     parser.add_argument("distance",help="distance used to compute similarity")
     parser.add_argument("outpath",help="path to store the best matches in")
     args = parser.parse_args()
-    main(args)
+    main(args.new_articles_path, args.model_path, args.scores_path, args.outpath, args.distance)

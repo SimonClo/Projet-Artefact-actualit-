@@ -10,16 +10,16 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from utils.models import RawArticle
 import config
 
-def main(argv):
+def main(outpath):
     """Store all archives in a binary file
     
     Arguments:
-        argv {list(string)} -- string args, must provide path attribute
+        outpath {string} -- path to store all archives in
     """
     client = Client(config.DB_HOST,config.DB_PORT,config.DB_NAME)
     client.connect(config.DB_USER,config.DB_PASSWORD)
     issues = client.fetch_all_archives()
-    with open(argv.path,"wb") as f:
+    with open(outpath,"wb") as f:
         pkl.dump(issues,f)
 
 class Client :
@@ -101,4 +101,4 @@ if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("path",help="path to store binary archives in")
     args = parser.parse_args()
-    main(args)
+    main(args.path)

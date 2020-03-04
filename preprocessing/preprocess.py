@@ -13,9 +13,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import config
 from utils.models import RawArticle, SplitArticle, ProcessedCorpus
 
-def main(argv):
+def main(inpath, outpath):
+    """Split raw articles and preprocess them
+    
+    Arguments:
+        inpath {string} -- path of the raw articles
+        outpath {string} -- path where the corpus of split articles will be saved
+    """
     # openning raw articles
-    with open(argv.inpath,"rb") as f:
+    with open(inpath,"rb") as f:
         articles = pkl.load(f)
     
     # Creating stop words list
@@ -48,7 +54,7 @@ def main(argv):
     corpus.apply_to_articles(lambda tokens: remove_stop_words(tokens,stop_words))
 
     # saving processed corpus
-    with open(argv.outpath,"wb") as f:
+    with open(outpath,"wb") as f:
         pkl.dump(corpus,f)  
 
 def tokenize(text):
@@ -90,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument("inpath",help="path of the input file")
     parser.add_argument("outpath",help="path of the output file")
     args = parser.parse_args()
-    main(args)
+    main(args.inpath, args.outpath)
 
     
     
