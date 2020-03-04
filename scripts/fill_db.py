@@ -11,6 +11,14 @@ import config
 
 
 def parse_articles(filepath) :
+    """Parse all articles in the given directory and put them in a list
+    
+    Arguments:
+        filepath {string} -- path of the directory containing all articles
+    
+    Returns:
+        list(RawArticles) -- a list of parsed raw articles
+    """
     articles = []
     for filename in os.listdir(filepath) :
         with open("/".join([filepath,filename]),"r") as file :
@@ -25,6 +33,12 @@ def parse_articles(filepath) :
     return articles
 
 def insert_all_articles(client,articles) :
+    """Insert all given articles in the database
+    
+    Arguments:
+        client {Clietn} -- database client
+        articles {list(RawArticles)} -- a list of raw articles
+    """
     for article in tqdm(articles) :
         client.insert_archive(article)
 

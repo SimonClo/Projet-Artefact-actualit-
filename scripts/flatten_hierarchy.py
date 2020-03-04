@@ -3,6 +3,11 @@ import sys
 import argparse
 
 def main(path):
+    """Remove the middle level directories
+    
+    Arguments:
+        path {string} -- path of the upper directory
+    """
     for dir_name in os.listdir(path):
         for file_name in os.listdir(os.path.join(path, dir_name)):
             os.rename(os.path.join(path, dir_name, file_name), os.path.join(path, file_name))
