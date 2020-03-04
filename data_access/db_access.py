@@ -8,16 +8,15 @@ import argparse
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.models import RawArticle
-import config
 
-def main(outpath):
+def main(outpath, host, port, user, password, db_name):
     """Store all archives in a binary file
     
     Arguments:
         outpath {string} -- path to store all archives in
     """
-    client = Client(config.DB_HOST,config.DB_PORT,config.DB_NAME)
-    client.connect(config.DB_USER,config.DB_PASSWORD)
+    client = Client(host, port, db_name)
+    client.connect(user, password)
     issues = client.fetch_all_archives()
     with open(outpath,"wb") as f:
         pkl.dump(issues,f)
@@ -57,7 +56,7 @@ class Client :
         except (Exception, pg.Error):
             logging.error("Connection failed")
 
-    def fetch_all_archives(self):
+    def fetch_all_archives(self, dev=False, dev_iterations=10):
         """Fetch all archives in the database
         
         Returns:
@@ -71,7 +70,7 @@ class Client :
             )
             records = self.cursor.fetchall()
             archives = [RawArticle(*record) for record in records]
-            if config.DEV_MODE : archives = archives[:config.DEV_MODE_ITERATIONS]
+            if dev : archives = archives[:dev_iterations]
             return archives
         except AttributeError:
             logging.error("Connection does not exist")
@@ -100,5 +99,10 @@ class Client :
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("path",help="path to store binary archives in")
+    parser.add_argument("host",help="database host")
+    parser.add_argument("port",help="database port")
+    parser.add_argument("user",help="username to use to connect")
+    parser.add_argument("password",help="password of the user")
+    parser.add_argument("db_name",help="dataabase name")
     args = parser.parse_args()
-    main(args.path)
+    main(args.path, args.host, args.port, args.user, args.password, args.db_name)

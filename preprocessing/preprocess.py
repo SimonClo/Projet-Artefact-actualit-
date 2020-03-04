@@ -10,7 +10,6 @@ from nltk.corpus import stopwords
 from stop_words import get_stop_words
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import config
 from utils.models import RawArticle, SplitArticle, ProcessedCorpus
 
 def main(inpath, outpath):

@@ -4,13 +4,12 @@ import argparse
 import pickle as pkl
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
-import config
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.models import RawArticle, SplitArticle, ProcessedCorpus
 
-def main(inpath_articles, inpath_model, inpath_corpus_scores, outpath_matches, distance):
+def main(inpath_articles, inpath_model, inpath_corpus_scores, outpath_matches, distance, num_matches=10):
     """Score new processed articles using the trained model, and compare that score with the
     score of the archives articles, using the given distance
     
@@ -32,7 +31,7 @@ def main(inpath_articles, inpath_model, inpath_corpus_scores, outpath_matches, d
     article_matches = []
     for article in new_corpus.articles :
         new_score = model.score(article)
-        best_matches = get_matching(score_matrix,new_score,distance,config.NUM_MATCHES)
+        best_matches = get_matching(score_matrix,new_score,distance,10)
         article_matches.append(best_matches)
     
     with open(outpath_matches,"wb") as f:
