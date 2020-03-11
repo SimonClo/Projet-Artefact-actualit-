@@ -8,9 +8,10 @@ from nltk import word_tokenize
 from nltk.stem.snowball import FrenchStemmer
 from nltk.corpus import stopwords
 from stop_words import get_stop_words
+from tqdm import tqdm
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from utils.models import RawArticle, SplitArticle, ProcessedCorpus
+from utils.models import RawArticle, SplitArticle
 
 logger = logging.getLogger(__name__)
 
@@ -43,20 +44,33 @@ def main(inpath, outpath):
     # processing articles
     split_articles = []
     logger.info("tokenizing articles")
-    for article in articles:
+    for article in tqdm(articles, desc="tokenization : "):
         split_text = tokenize(article.text)
         split_articles.append(SplitArticle(article.id,article.title,article.newspaper,article.date,article.url,split_text))
-    corpus = ProcessedCorpus(split_articles)
-    logger.info("removing stop words")
-    corpus.apply_to_tokens_in_articles(lambda text: text.lower())
-    corpus.apply_to_articles(lambda tokens: remove_stop_words(tokens,stop_words))
-    logger.info("applying lemmatization")
-    corpus.apply_to_tokens_in_articles(lemmatize)
-    corpus.apply_to_articles(lambda tokens: remove_stop_words(tokens,stop_words))
+
+    for article in tqdm(split_articles, desc="lowercasing : "):
+        article.apply_to_tokens(lambda word: word.lower())
+
+    logger.info("tokens converted to lowercase")
+
+    for article in tqdm(split_articles, desc="stop words removal : "):
+        remove_stop_words(article.tokens, stop_words)
+
+    logger.info("stop words removed")
+
+    for article in tqdm(split_articles, desc="lemmatization : "):
+        article.apply_to_tokens(lemmatize)
+    
+    logger.info("tokens lemmatized")
+
+    for article in tqdm(split_articles, desc="more removal : "):
+        remove_stop_words(article.tokens, stop_words)
+
+    logger.info("preprocessing done")
 
     # saving processed corpus
     with open(outpath,"wb") as f:
-        pkl.dump(corpus,f)  
+        pkl.dump(split_articles,f)  
 
 def tokenize(text):
     """tokenize words in a text

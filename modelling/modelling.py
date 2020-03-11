@@ -2,8 +2,7 @@ import os
 import sys
 import argparse
 import pickle as pkl
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from utils.models import RawArticle, SplitArticle, ProcessedCorpus
+from tqdm import tqdm
 
 from gensim import corpora
 import gensim
@@ -13,14 +12,20 @@ import numpy as np
 import pyLDAvis
 import pyLDAvis.gensim 
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from utils.models import RawArticle, SplitArticle
+import re
+
 from modelling.tf_idf import get_articles_keywords
 
 logger = logging.getLogger(__name__)
 
+
+
 def get_titles_and_texts(corpus):
     titles = []
     articles = []
-    for article in corpus.articles:
+    for article in corpus:
         titles.append(article.title)
         articles.append(article.tokens)
     logger.info('Created titles and articles')
@@ -28,7 +33,7 @@ def get_titles_and_texts(corpus):
 
 def get_scores_from_documents_topics_matrix(documents_topics, nb_topics, corpus):
     scores = [[0]*nb_topics]*len(corpus)
-    for i in range(len(corpus)):
+    for i in tqdm(range(len(corpus)), desc="scoring topics on corpus"):
         for j in range(nb_topics):
             scores[i][j] = documents_topics[i][j][1]
     return(scores)
@@ -70,16 +75,20 @@ def main(inpath, outpath_model, outpath_scores):
     logger.info('Created dictionary and corpus')
 
     # create lda model with gensim
-    ldamodel = gensim.models.ldamodel.LdaModel(
-    corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=10, per_word_topics=True, update_every=1, iterations=50
+    lda_progress = LDAProgress(10)
+    ldamodel = gensim.models.ldamulticore.LdaMulticore(
+        corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=10, per_word_topics=True, 
+        iterations=50
     )
+    lda_progress.close()
+
     logger.info('Created gensim model')
 
     # print the topics (debug)
-    logger.info('Topics:')
+    logger.debug('Topics:')
     topics = ldamodel.print_topics(num_words=5)
     for topic in topics:
-        logger.info(topic)
+        logger.debug(topic)
 
     # Plot topics in a nice way (work in process ...)
 
@@ -90,9 +99,11 @@ def main(inpath, outpath_model, outpath_scores):
     # get topics and keywords
     get_document_topics = ldamodel.get_document_topics(corpus, minimum_probability=0.0)
     topic_scores = get_scores_from_documents_topics_matrix(get_document_topics, NUM_TOPICS, corpus)
+    logger.info("evaluated scores on corpus")
 
     # get article keywords
     keywords_scores = get_articles_keywords(texts, 20, words_no_above)
+    logger.info("computed most significant keyword for each article (TF-IDF)")
 
     # get scores and save them
     scores = np.array([{'topics': topic_scores[0], 'keywords': keywords_scores[0]}])
@@ -102,12 +113,52 @@ def main(inpath, outpath_model, outpath_scores):
 
     with open(outpath_scores,"wb") as f:
         pkl.dump(scores,f)
+    logger.info("saved scores in "+outpath_scores)
 
+class LDAProgress:
+
+    def __init__(self,n_iter):
+        self.logger = logging.getLogger("gensim")
+        self.logger.setLevel(logging.INFO)
+        self.handler = FilterHandler(n_iter)
+        self.logger.addHandler(self.handler)
+
+    def close(self):
+        self.handler.progress.close()
+        self.logger.removeHandler(self.handler)
+
+class FilterHandler(logging.StreamHandler):
+
+    def __init__(self, n_epochs, stream=None):
+        super().__init__(stream)
+        self.epoch = 0
+        self.progress = tqdm(total = n_epochs, desc="processing lda : ")
+        self.n_epochs = n_epochs
+        self.progress.update()
+
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            msg = record.getMessage()
+            if re.match(r"^PROGRESS:*", msg):
+                epoch = int(msg[15])
+                if epoch != self.epoch:
+                    self.epoch += 1
+                    self.progress.update()
+        except RecursionError:
+            raise
+        except Exception:
+            self.handleError(record)
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("inpath",help="path to get preprocessed articles")
     parser.add_argument("outpath_model",help="path to store the model in")
     parser.add_argument("outpath_scores",help="path to store articles scores in")
+    parser.add_argument("-v","--verbose", action="store_true", help="verbosity for gensim in particular")
     args = parser.parse_args()
+    if args.verbose:
+        logger.setLevel(logging.INFO)
+        logger.addHandler(logging.StreamHandler())
+
     main(args.inpath, args.outpath_model, args.outpath_scores)

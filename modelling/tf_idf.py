@@ -1,6 +1,7 @@
 import sklearn
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
+from tqdm import tqdm
 
 def sort_coo(coo_matrix):
     # sord by descending number of score
@@ -52,7 +53,7 @@ def get_articles_keywords(articles, nb_vectors, words_no_above):
     tfidf_transformer.fit(word_count_vector)
 
     scores = []
-    for article in articles:
+    for article in tqdm(articles, desc="processing TF-IDF"):
         scores.append(get_kekwords_from_text(article, nb_vectors, tfidf_transformer, cv))
     
     return scores
