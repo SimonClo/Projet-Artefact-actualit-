@@ -8,14 +8,22 @@ from nltk import word_tokenize
 from nltk.stem.snowball import FrenchStemmer
 from nltk.corpus import stopwords
 from stop_words import get_stop_words
+from tqdm import tqdm
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import config
-from utils.models import RawArticle, SplitArticle, ProcessedCorpus
+from utils.models import RawArticle, SplitArticle
 
-def main(argv):
+logger = logging.getLogger(__name__)
+
+def main(inpath, outpath):
+    """Split raw articles and preprocess them
+    
+    Arguments:
+        inpath {string} -- path of the raw articles
+        outpath {string} -- path where the corpus of split articles will be saved
+    """
     # openning raw articles
-    with open(argv.inpath,"rb") as f:
+    with open(inpath,"rb") as f:
         articles = pkl.load(f)
     
     # Creating stop words list
@@ -35,21 +43,34 @@ def main(argv):
 
     # processing articles
     split_articles = []
-    logging.info("tokenizing articles")
-    for article in articles:
+    logger.info("tokenizing articles")
+    for article in tqdm(articles, desc="tokenization : "):
         split_text = tokenize(article.text)
         split_articles.append(SplitArticle(article.id,article.title,article.newspaper,article.date,article.url,split_text))
-    corpus = ProcessedCorpus(split_articles)
-    logging.info("removing stop words")
-    corpus.apply_to_tokens_in_articles(lambda text: text.lower())
-    corpus.apply_to_articles(lambda tokens: remove_stop_words(tokens,stop_words))
-    logging.info("applying lemmatization")
-    corpus.apply_to_tokens_in_articles(lemmatize)
-    corpus.apply_to_articles(lambda tokens: remove_stop_words(tokens,stop_words))
+
+    for article in tqdm(split_articles, desc="lowercasing : "):
+        article.apply_to_tokens(lambda word: word.lower())
+
+    logger.info("tokens converted to lowercase")
+
+    for article in tqdm(split_articles, desc="stop words removal : "):
+        remove_stop_words(article.tokens, stop_words)
+
+    logger.info("stop words removed")
+
+    for article in tqdm(split_articles, desc="lemmatization : "):
+        article.apply_to_tokens(lemmatize)
+    
+    logger.info("tokens lemmatized")
+
+    for article in tqdm(split_articles, desc="more removal : "):
+        remove_stop_words(article.tokens, stop_words)
+
+    logger.info("preprocessing done")
 
     # saving processed corpus
-    with open(argv.outpath,"wb") as f:
-        pkl.dump(corpus,f)  
+    with open(outpath,"wb") as f:
+        pkl.dump(split_articles,f)  
 
 def tokenize(text):
     """tokenize words in a text
@@ -90,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument("inpath",help="path of the input file")
     parser.add_argument("outpath",help="path of the output file")
     args = parser.parse_args()
-    main(args)
+    main(args.inpath, args.outpath)
 
     
     
