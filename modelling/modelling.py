@@ -15,6 +15,7 @@ import pyLDAvis.gensim
 
 from tf_idf import get_articles_keywords
 from force_topics import get_eta
+from models import Model
 
 def get_titles_and_texts(corpus):
     titles = []
@@ -25,11 +26,11 @@ def get_titles_and_texts(corpus):
     logging.info('Created titles and articles')
     return (titles, articles)
 
-def get_scores_from_documents_topics_matrix(documents_topics, nb_topics, corpus):
+def get_scores_from_documents(corpus, nb_topics, model, dictionary): #wrong !!!!!!
     scores = [[0]*nb_topics]*len(corpus)
     for i in range(len(corpus)):
-        for j in range(nb_topics):
-            scores[i][j] = documents_topics[i][j][1]
+        article_corpus = corpus[i]
+        scores[i] = model.get_document_topics(article_corpus)
     return(scores)
 
 def get_texts_from_splited_articles(splited_articles):
@@ -45,8 +46,7 @@ def main(argv):
     Create a lda model and save it. Give to each article a score vector and save them.
     Args:
      - input path to corpus
-     - output path for model
-     - output path for score vector
+     - output path for model and scores
     """
     # openning preprocessed articles
     with open(argv.inpath,"rb") as f:
@@ -85,31 +85,29 @@ def main(argv):
 
     # Plot topics in a nice way (work in process ...)
 
-    # save model in given outpath file
-    ldamodel.save(argv.outpath_model)
-    logging.info('Saved the model in '+argv.outpath_model)
-
-    # get topics and keywords
-    get_document_topics = ldamodel.get_document_topics(corpus, minimum_probability=0.0)
-    topic_scores = get_scores_from_documents_topics_matrix(get_document_topics, NUM_TOPICS, corpus)
+    # get topics and keywords // wrong !!!!!!
+    topic_scores = get_scores_from_documents(corpus, NUM_TOPICS, ldamodel, dictionary)
 
     # get article keywords
-    keywords_scores = get_articles_keywords(texts, 20, words_no_above)
+    num_keywords = 20
+    keywords_scores = get_articles_keywords(texts, num_keywords, words_no_above)
 
     # get scores and save them
     scores = np.array([{'topics': topic_scores[0], 'keywords': keywords_scores[0]}])
     for i in range(1, len(articles)):
         scores = np.append(scores, [{'topics': topic_scores[i], 'keywords': keywords_scores[i]}], axis=0)
-    print(scores[0])
 
-    with open(argv.outpath_scores,"wb") as f:
-        pkl.dump(scores,f)
+    # save model and scores in given outpath file
+    model = Model(ldamodel, scores, dictionary, num_keywords, words_no_above)
+    with open(argv.outpath,"wb") as f:
+        pkl.dump(model,f)
+    logging.info('Saved the model in '+argv.outpath)
 
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("inpath",help="path to get preprocessed articles")
-    parser.add_argument("outpath_model",help="path to store the model in")
-    parser.add_argument("outpath_scores",help="path to store articles scores in")
+    parser.add_argument("outpath",help="path to store the model in")
+    #parser.add_argument("outpath_scores",help="path to store articles scores in")
     args = parser.parse_args()
     main(args)
