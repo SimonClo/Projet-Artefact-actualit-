@@ -14,6 +14,7 @@ import pyLDAvis
 import pyLDAvis.gensim 
 
 from tf_idf import get_articles_keywords
+from force_topics import get_eta
 
 def get_titles_and_texts(corpus):
     titles = []
@@ -67,9 +68,12 @@ def main(argv):
     corpus = [dictionary.doc2bow(article) for article in articles]
     logging.info('Created dictionary and corpus')
 
+    # get eta to force topics
+    eta = get_eta(NUM_TOPICS, dictionary)
+
     # create lda model with gensim
     ldamodel = gensim.models.ldamodel.LdaModel(
-    corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=10, per_word_topics=True, update_every=1, iterations=50
+    corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=10, per_word_topics=True, update_every=1, iterations=50, eta=eta
     )
     logging.info('Created gensim model')
 
