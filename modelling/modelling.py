@@ -17,10 +17,9 @@ from utils.models import RawArticle, SplitArticle
 import re
 
 from modelling.tf_idf import get_articles_keywords
+from force_topics import get_eta
 
 logger = logging.getLogger(__name__)
-
-
 
 def get_titles_and_texts(corpus):
     titles = []
@@ -74,11 +73,14 @@ def main(inpath, outpath_model, outpath_scores):
     corpus = [dictionary.doc2bow(article) for article in articles]
     logger.info('Created dictionary and corpus')
 
+    # get eta to force topics
+    eta = get_eta(NUM_TOPICS, dictionary)
+
     # create lda model with gensim
     lda_progress = LDAProgress(10)
-    ldamodel = gensim.models.ldamulticore.LdaMulticore(
-        corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=10, per_word_topics=True, 
-        iterations=50
+    ldamodel = gensim.models.ldamodel.LdaModel(
+    corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=10, per_word_topics=True, 
+        update_every=1, iterations=50, eta=eta
     )
     lda_progress.close()
 
