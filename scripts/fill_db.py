@@ -32,7 +32,7 @@ def parse_articles(filepath) :
                 articles.append(RawArticle(len(articles),title,newspaper,date,url,text))
     return articles
 
-def insert_all_articles(client,articles) :
+def insert_all_articles(client,articles,archives) :
     """Insert all given articles in the database
     
     Arguments:
@@ -40,15 +40,16 @@ def insert_all_articles(client,articles) :
         articles {list(RawArticles)} -- a list of raw articles
     """
     for article in tqdm(articles) :
-        client.insert_archive(article)
+        client.insert_article(article,archive=archives)
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("filePath",help="path of parent directory of articles to insert")
+    parser.add_argument("--archives",action="store_true",help="wether to store given articles in archives")
     args = parser.parse_args()
     articles = parse_articles(args.filePath)
     client = Client(config.DB_HOST,config.DB_PORT,config.DB_NAME)
     client.connect(config.DB_USER,config.DB_PASSWORD)
-    insert_all_articles(client,articles)
+    insert_all_articles(client,articles,args.archives)
 
 

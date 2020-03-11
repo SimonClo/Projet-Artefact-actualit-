@@ -11,7 +11,7 @@ from utils.models import RawArticle
 
 logger = logging.getLogger(__name__)
 
-def main(outpath, host, port, user, password, db_name, dev=False, dev_iterations=10):
+def main(outpath, host, port, user, password, db_name, archives=True, dev=False, dev_iterations=10):
     """Store all archives in a binary file
     
     Arguments:
@@ -19,8 +19,8 @@ def main(outpath, host, port, user, password, db_name, dev=False, dev_iterations
     """
     client = Client(host, port, db_name)
     client.connect(user, password)
-    logger.info("fetching archives")
-    issues = client.fetch_all_archives(dev, dev_iterations)
+    logger.info("fetching articles")
+    issues = client.fetch_all_articles(archives=archives, dev=dev, dev_iterations=dev_iterations)
     with open(outpath,"wb") as f:
         pkl.dump(issues,f)
 
@@ -59,38 +59,51 @@ class Client :
         except (Exception, pg.Error):
             logger.error("Connection failed")
 
-    def fetch_all_archives(self, dev, dev_iterations):
-        """Fetch all archives in the database
+    def fetch_all_articles(self, archives=True, dev=True, dev_iterations=10):
+        """Fetch all articles in the database
         
         Returns:
             list(archives) -- a list of article objects
         """
         try :
-            self.cursor.execute(
-                '''
-                SELECT id, title, newspaper, published_date, url, article_text FROM archives
-                '''
-            )
+            if archives:
+                self.cursor.execute(
+                    '''
+                    SELECT id, title, newspaper, published_date, url, article_text FROM archives
+                    '''
+                )
+            else:
+                self.cursor.execute(
+                    '''
+                    SELECT id, title, newspaper, published_date, url, article_text FROM recent_articles
+                    '''
+                )
             records = self.cursor.fetchall()
-            archives = [RawArticle(*record) for record in records]
-            if dev : archives = archives[:dev_iterations]
-            return archives
+            articles = [RawArticle(*record) for record in records]
+            if dev : articles = articles[:dev_iterations]
+            return articles
         except AttributeError:
             logger.error("Connection does not exist")
         except (Exception, pg.Error):
             logger.error("Unable to retrieve archives")
 
-    def insert_archive(self,article):
-        """Insert the given article in the database
+    def insert_article(self,article,archive = True):
+        """Insert the given archive in the database
         
         Arguments:
             article {Article object} -- the article to be inserted
         """
         try :
-            insert_query = '''
-                INSERT INTO archives(title,newspaper,published_date,url,article_text)
-                VALUES (%s,%s,%s,%s,%s)
-            '''
+            if archive:
+                insert_query = '''
+                    INSERT INTO archives(title,newspaper,published_date,url,article_text)
+                    VALUES (%s,%s,%s,%s,%s)
+                '''
+            else:
+                insert_query = '''
+                    INSERT INTO archives(title,newspaper,published_date,url,article_text)
+                    VALUES (%s,%s,%s,%s,%s)
+                '''
             values = (article.title, article.newspaper, article.date, article.url, article.text)
             self.cursor.execute(insert_query,values)
             self.connection.commit()
@@ -99,6 +112,7 @@ class Client :
         except (Exception, pg.Error):
             logger.error("Unable to insert")
 
+
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("path",help="path to store binary archives in")
@@ -106,6 +120,7 @@ if __name__ == "__main__" :
     parser.add_argument("port",help="database port")
     parser.add_argument("user",help="username to use to connect")
     parser.add_argument("password",help="password of the user")
-    parser.add_argument("db_name",help="dataabase name")
+    parser.add_argument("db_name",help="database name")
+    parser.add_argument("--archives",action="store_true",help="wether to fetch archives or recent articles")
     args = parser.parse_args()
-    main(args.path, args.host, args.port, args.user, args.password, args.db_name)
+    main(args.path, args.host, args.port, args.user, args.password, args.db_name, args.archives)

@@ -116,6 +116,8 @@ def main(inpath, outpath_model, outpath_scores):
     logger.info("saved scores in "+outpath_scores)
 
 class LDAProgress:
+    """A logger for progress of the LDA model
+    """
 
     def __init__(self,n_iter):
         self.logger = logging.getLogger("gensim")
@@ -128,6 +130,9 @@ class LDAProgress:
         self.logger.removeHandler(self.handler)
 
 class FilterHandler(logging.StreamHandler):
+    """A handler that intercepts logging event based on
+    filtering rules
+    """
 
     def __init__(self, n_epochs, stream=None):
         super().__init__(stream)
