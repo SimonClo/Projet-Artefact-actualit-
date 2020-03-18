@@ -31,13 +31,6 @@ def get_titles_and_texts(corpus):
     logger.info('Created titles and articles')
     return (titles, articles)
 
-def get_scores_from_documents(corpus, nb_topics, model, dictionary): #wrong !!!!!!
-    scores = [[0]*nb_topics]*len(corpus)
-    for i in tqdm(range(len(corpus)), desc="scoring topics on corpus"):
-        article_corpus = corpus[i]
-        scores[i] = model.get_document_topics(article_corpus)
-    return(scores)
-
 def get_texts_from_splited_articles(splited_articles):
     texts = []
     for article in splited_articles:
@@ -46,7 +39,7 @@ def get_texts_from_splited_articles(splited_articles):
     return texts
 
 
-def main(inpath, outpath_model, outpath_scores):
+def main(inpath, outpath_model):
     """
     Create a lda model and save it. Give to each article a score vector and save them.
     Args:
@@ -92,23 +85,11 @@ def main(inpath, outpath_model, outpath_scores):
     for topic in topics:
         logger.debug(topic)
 
-    # Plot topics in a nice way (work in process ...)
-
-    # get topics and keywords // wrong !!!!!!
-    topic_scores = get_scores_from_documents(corpus, NUM_TOPICS, ldamodel, dictionary)
-
     # get article keywords
     num_keywords = 20
-    keywords_scores = get_articles_keywords(texts, num_keywords, words_no_above)
-    logger.info("evaluated scores on corpus")
-
-    # get scores and save them
-    scores = np.array([{'topics': topic_scores[0], 'keywords': keywords_scores[0]}])
-    for i in range(1, len(articles)):
-        scores = np.append(scores, [{'topics': topic_scores[i], 'keywords': keywords_scores[i]}], axis=0)
 
     # save model and scores in given outpath file
-    model = Model(ldamodel, scores, dictionary, num_keywords, words_no_above)
+    model = Model(ldamodel, texts, dictionary, num_keywords, words_no_above)
     with open(argv.outpath,"wb") as f:
         pkl.dump(model,f)
     logging.info('Saved the model in '+argv.outpath)
@@ -163,4 +144,4 @@ if __name__ == "__main__" :
         logger.setLevel(logging.INFO)
         logger.addHandler(logging.StreamHandler())
 
-    main(args.inpath, args.outpath_model, args.outpath_scores)
+    main(args.inpath, args.outpath_model)
