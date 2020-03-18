@@ -16,9 +16,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from utils.models import RawArticle, SplitArticle
 import re
 
-from modelling.tf_idf import get_articles_keywords
-from force_topics import get_eta
-from models import Model
+from modelling.force_topics import get_eta
+from modelling.models import TopicsAndTfIdfModel
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ def get_texts_from_splited_articles(splited_articles):
     return texts
 
 
-def main(inpath, outpath_model):
+def main(inpath, outpath):
     """
     Create a lda model and save it. Give to each article a score vector and save them.
     Args:
@@ -57,8 +56,10 @@ def main(inpath, outpath_model):
     texts = get_texts_from_splited_articles(articles)
 
     # Choose the parametres
-    words_no_above = 0.6 # delete words that are in more than ... of the articles, works for topic modelling and keywords !
+    words_no_above = 1 # delete words that are in more than ... of the articles, works for topic modelling and keywords !
+    # put 1 for tests
     NUM_TOPICS = 5
+    num_keywords = 20 # nb of keywords
 
     # create dictionary and corpus
     dictionary = corpora.Dictionary(articles)
@@ -85,14 +86,11 @@ def main(inpath, outpath_model):
     for topic in topics:
         logger.debug(topic)
 
-    # get article keywords
-    num_keywords = 20
-
     # save model and scores in given outpath file
-    model = Model(ldamodel, texts, dictionary, num_keywords, words_no_above)
-    with open(argv.outpath,"wb") as f:
+    model = TopicsAndTfIdfModel(ldamodel, texts, dictionary, num_keywords, words_no_above)
+    with open(outpath,"wb") as f:
         pkl.dump(model,f)
-    logging.info('Saved the model in '+argv.outpath)
+    logging.info('Saved the model in '+outpath)
 
 class LDAProgress:
     """A logger for progress of the LDA model
@@ -137,11 +135,11 @@ class FilterHandler(logging.StreamHandler):
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("inpath",help="path to get preprocessed articles")
-    parser.add_argument("outpath_model",help="path to store the model in")
+    parser.add_argument("outpath",help="path to store the model in")
     parser.add_argument("-v","--verbose", action="store_true", help="verbosity for gensim in particular")
     args = parser.parse_args()
     if args.verbose:
         logger.setLevel(logging.INFO)
         logger.addHandler(logging.StreamHandler())
 
-    main(args.inpath, args.outpath_model)
+    main(args.inpath, args.outpath)
