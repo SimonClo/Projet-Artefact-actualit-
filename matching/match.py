@@ -7,7 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from utils.models import RawArticle, SplitArticle, ProcessedCorpus
+from utils.models import RawArticle, SplitArticle
 
 def main(inpath_articles, inpath_model, inpath_corpus_scores, outpath_matches, distance, num_matches=10):
     """Score new processed articles using the trained model, and compare that score with the
