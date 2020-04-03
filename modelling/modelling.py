@@ -16,8 +16,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from utils.models import RawArticle, SplitArticle
 import re
 
-from modelling.tf_idf import get_articles_keywords
-from force_topics import get_eta
+from modelling.force_topics import get_eta
+from modelling.models import TopicsAndTfIdfModel
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +30,6 @@ def get_titles_and_texts(corpus):
     logger.info('Created titles and articles')
     return (titles, articles)
 
-def get_scores_from_documents_topics_matrix(documents_topics, nb_topics, corpus):
-    scores = [[0]*nb_topics]*len(corpus)
-    for i in tqdm(range(len(corpus)), desc="scoring topics on corpus"):
-        for j in range(nb_topics):
-            scores[i][j] = documents_topics[i][j][1]
-    return(scores)
-
 def get_texts_from_splited_articles(splited_articles):
     texts = []
     for article in splited_articles:
@@ -45,13 +38,12 @@ def get_texts_from_splited_articles(splited_articles):
     return texts
 
 
-def main(inpath, outpath_model, outpath_scores):
+def main(inpath, outpath):
     """
     Create a lda model and save it. Give to each article a score vector and save them.
     Args:
      - input path to corpus
-     - output path for model
-     - output path for score vector
+     - output path for model and scores
     """
     # openning preprocessed articles
     with open(inpath,"rb") as f:
@@ -64,8 +56,10 @@ def main(inpath, outpath_model, outpath_scores):
     texts = get_texts_from_splited_articles(articles)
 
     # Choose the parametres
-    words_no_above = 0.6 # delete words that are in more than ... of the articles, works for topic modelling and keywords !
+    words_no_above = 1 # delete words that are in more than ... of the articles, works for topic modelling and keywords !
+    # put 1 for tests
     NUM_TOPICS = 5
+    num_keywords = 20 # nb of keywords
 
     # create dictionary and corpus
     dictionary = corpora.Dictionary(articles)
@@ -92,30 +86,11 @@ def main(inpath, outpath_model, outpath_scores):
     for topic in topics:
         logger.debug(topic)
 
-    # Plot topics in a nice way (work in process ...)
-
-    # save model in given outpath file
-    ldamodel.save(outpath_model)
-    logger.info('Saved the model in '+outpath_model)
-
-    # get topics and keywords
-    get_document_topics = ldamodel.get_document_topics(corpus, minimum_probability=0.0)
-    topic_scores = get_scores_from_documents_topics_matrix(get_document_topics, NUM_TOPICS, corpus)
-    logger.info("evaluated scores on corpus")
-
-    # get article keywords
-    keywords_scores = get_articles_keywords(texts, 20, words_no_above)
-    logger.info("computed most significant keyword for each article (TF-IDF)")
-
-    # get scores and save them
-    scores = np.array([{'topics': topic_scores[0], 'keywords': keywords_scores[0]}])
-    for i in range(1, len(articles)):
-        scores = np.append(scores, [{'topics': topic_scores[i], 'keywords': keywords_scores[i]}], axis=0)
-    print(scores[0])
-
-    with open(outpath_scores,"wb") as f:
-        pkl.dump(scores,f)
-    logger.info("saved scores in "+outpath_scores)
+    # save model and scores in given outpath file
+    model = TopicsAndTfIdfModel(ldamodel, texts, dictionary, num_keywords, words_no_above)
+    with open(outpath,"wb") as f:
+        pkl.dump(model,f)
+    logging.info('Saved the model in '+outpath)
 
 class LDAProgress:
     """A logger for progress of the LDA model
@@ -160,12 +135,11 @@ class FilterHandler(logging.StreamHandler):
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("inpath",help="path to get preprocessed articles")
-    parser.add_argument("outpath_model",help="path to store the model in")
-    parser.add_argument("outpath_scores",help="path to store articles scores in")
+    parser.add_argument("outpath",help="path to store the model in")
     parser.add_argument("-v","--verbose", action="store_true", help="verbosity for gensim in particular")
     args = parser.parse_args()
     if args.verbose:
         logger.setLevel(logging.INFO)
         logger.addHandler(logging.StreamHandler())
 
-    main(args.inpath, args.outpath_model, args.outpath_scores)
+    main(args.inpath, args.outpath)
