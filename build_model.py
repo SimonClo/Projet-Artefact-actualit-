@@ -32,5 +32,5 @@ article_retrieval.main(config.PATH_RAW_ARCHIVES, config.DB_HOST, config.DB_PORT,
     config.DB_PASSWORD, config.DB_NAME, archives=True, dev=config.DEV_MODE, dev_iterations=config.DEV_MODE_ITERATIONS
 )
 preprocess.main(config.PATH_RAW_ARCHIVES, config.PATH_PROCESSED_ARCHIVES)
-modelling.main(config.PATH_PROCESSED_ARCHIVES, config.PATH_MODEL)
+modelling.main(config.PATH_PROCESSED_ARCHIVES, config.PATH_MODELS)
     

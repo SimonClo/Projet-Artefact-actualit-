@@ -16,6 +16,7 @@ DEV_MODE_ITERATIONS = 100
 # Matching variables
 
 NUM_MATCHES = 10
+DISTANCE = "cosine"
 
 # Paths for the modelling pipeline
 
@@ -27,8 +28,18 @@ else:
 os.makedirs(PATH_MODELLING, exist_ok=True)
 PATH_RAW_ARCHIVES = os.path.join(PATH_MODELLING,"raw_articles.pkl")
 PATH_PROCESSED_ARCHIVES = os.path.join(PATH_MODELLING,"processed_articles.pkl")
-PATH_MODEL = os.path.join(PATH_MODELLING,"model.pkl")
-PATH_SCORES = os.path.join(PATH_MODELLING,"scores.pkl")
+PATH_MODELS = os.path.join(PATH_MODELLING,"model.pkl")
+
+# Paths for the matching pipeline
+
+if DEV_MODE:
+    PATH_MATCHING = os.path.join(os.getcwd(),"data","dev_matching")
+else:
+    PATH_MATCHING = os.path.join(os.getcwd(),"data","matching")
+os.makedirs(PATH_MATCHING, exist_ok=True)
+PATH_RAW_ARTICLES = os.path.join(PATH_MATCHING,"raw_articles.pkl")
+PATH_PROCESSED_ARTICLES = os.path.join(PATH_MATCHING,"processed_articles.pkl")
+PATH_MATCHES = os.path.join(PATH_MATCHING,"matches.pkl")
 
 # Topic modeling
 
