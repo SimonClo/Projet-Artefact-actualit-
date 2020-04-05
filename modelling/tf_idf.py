@@ -31,7 +31,7 @@ def extract_topn_from_vector(feature_names, sorted_items, topn=10):
     
     return results
 
-def get_kekwords_from_text(doc, nb_vectors, tfidf_transformer, cv):
+def get_keywords_from_text(doc, nb_vectors, tfidf_transformer, cv):
     #generate tf-idf for the given document
     tf_idf_vector=tfidf_transformer.transform(cv.transform([doc]))
     
@@ -53,6 +53,6 @@ def get_articles_keywords(articles, nb_vectors, words_no_above):
 
     scores = []
     for article in articles:
-        scores.append(get_kekwords_from_text(article, nb_vectors, tfidf_transformer, cv))
+        scores.append(get_keywords_from_text(article, nb_vectors, tfidf_transformer, cv))
     
-    return scores
+    return scores, cv, tfidf_transformer
