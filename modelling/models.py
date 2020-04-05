@@ -11,6 +11,7 @@ import gensim
 from gensim import corpora
 from gensim.models.word2vec import Word2Vec
 from gensim.models.ldamulticore import LdaMulticore
+from gensim.models.callbacks import CallbackAny2Vec
 
 from modelling.force_topics import get_eta
 
@@ -162,8 +163,10 @@ class Word2VecModel(Model):
 
     def train(self):
         token_lists = [article.tokens for article in self.articles]
+        w2v_progress = W2VProgress(self.iterations)
         model = Word2Vec(sentences=token_lists, size = self.size, window = self.window, 
-            min_count=self.words_no_above, workers=cpu_count(), iter=self.iterations)
+            min_count=self.words_no_above, workers=cpu_count(), iter=self.iterations, callbacks=[progress])
+        w2v_progress.close()
         self.vocabulary = set(model.wv.vocab)
         model.init_sims(replace=True)
         self.model = model.wv
@@ -216,3 +219,14 @@ class FilterHandler(logging.StreamHandler):
             raise
         except Exception:
             self.handleError(record)
+
+class W2VProgress(CallbackAny2Vec):
+
+    def __init__(self, n_epochs):
+        self.progress = tqdm(total = n_epochs, desc="processing word2vec : ")
+
+    def on_batch_end(self, model):
+        self.progress.update()
+
+    def close(self):
+        self.progress.close()
