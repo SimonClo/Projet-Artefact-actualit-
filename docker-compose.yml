@@ -1,0 +1,10 @@
+version: "3.7"
+services:
+    database:
+        build: 
+            context: .
+            dockerfile: ./data_access/Dockerfile
+        image: artefact_db_img
+        container_name: artefact_db
+        ports: 
+            - 8765:5432

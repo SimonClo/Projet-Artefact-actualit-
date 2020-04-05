@@ -46,10 +46,15 @@ if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("filePath",help="path of parent directory of articles to insert")
     parser.add_argument("--archives",action="store_true",help="wether to store given articles in archives")
+    parser.add_argument("--port", help="port of the db", type=int, default=config.DB_PORT)
+    parser.add_argument("--user", help="username for the db", default=config.DB_USER)
+    parser.add_argument("--host", help="host for the db", default=config.DB_HOST)
+    parser.add_argument("--db-name", help="database name", default=config.DB_NAME)
+    parser.add_argument("--password", help="password for the db user", default=config.DB_PASSWORD)
     args = parser.parse_args()
+    client = Client(args.host, args.port, args.db_name)
+    client.connect(args.user,args.password)
     articles = parse_articles(args.filePath)
-    client = Client(config.DB_HOST,config.DB_PORT,config.DB_NAME)
-    client.connect(config.DB_USER,config.DB_PASSWORD)
     insert_all_articles(client,articles,args.archives)
 
 
