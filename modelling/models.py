@@ -91,7 +91,7 @@ class TopicsModel(Model):
         )
         lda_progress.close()
 
-        logger.info('Created gensim model')
+        logger.info('Created Topics model')
 
         # print the topics (debug)
         logger.debug('Topics:')
@@ -128,7 +128,7 @@ class TfIdfModel(Model):
     # get tf idf keywords
     def get_article_score(self, article):
         article = self.filter_vocab(article)
-        joined_article = " ".join(article)
+        joined_article = " ".join(article.tokens)
         keywords_score = get_keywords_from_text(joined_article, self.num_keywords, self.tf_idf_transformer, self.count_vectorizer)
 
         return keywords_score
@@ -138,7 +138,7 @@ class TfIdfModel(Model):
         """
         texts = []
         for article in splited_articles:
-            text = ' '.join(article)
+            text = ' '.join(article.tokens)
             texts.append(text)
         return texts
 
@@ -165,7 +165,7 @@ class Word2VecModel(Model):
         token_lists = [article.tokens for article in self.articles]
         w2v_progress = W2VProgress(self.iterations)
         model = Word2Vec(sentences=token_lists, size = self.size, window = self.window, 
-            min_count=self.words_no_above, workers=cpu_count(), iter=self.iterations, callbacks=[progress])
+            min_count=self.words_no_above, workers=cpu_count(), iter=self.iterations, callbacks=[w2v_progress])
         w2v_progress.close()
         self.vocabulary = set(model.wv.vocab)
         model.init_sims(replace=True)
