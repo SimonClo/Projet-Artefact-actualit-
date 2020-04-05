@@ -28,7 +28,7 @@ class Model(ABC):
         scores = []
         for article in tqdm(self.articles, desc="get articles scoring"):
             scores.append(self.get_article_score(article))
-        return np.array(scores)
+        return scores
 
     def __init__(self, articles):
         """Create the model from the given arguments
@@ -36,7 +36,7 @@ class Model(ABC):
         Arguments:
             articles {SplitArticles}
         """
-        self.articles = articles #non splitted articles
+        self.articles = articles
         self.vocabulary = set()
         for article in articles : 
             self.vocabulary.update(article.tokens)
@@ -105,7 +105,7 @@ class TopicsModel(Model):
     def get_article_score(self, article):
         article = self.filter_vocab(article)
         article_corpus = self.dictionary.doc2bow(article.tokens)
-        topic_score = self.model.get_document_topics(article_corpus)
+        topic_score = self.model.get_document_topics(article_corpus, minimum_probability=0)
 
         return topic_score
 

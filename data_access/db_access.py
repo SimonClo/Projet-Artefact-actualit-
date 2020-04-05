@@ -1,28 +1,8 @@
 import psycopg2 as pg 
-import logging
-import pickle as pkl
-import os
-import sys
-import argparse
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from utils.models import RawArticle
+import logging
 
 logger = logging.getLogger(__name__)
-
-def main(outpath, host, port, user, password, db_name, archives=True, dev=False, dev_iterations=10):
-    """Store all archives in a binary file
-    
-    Arguments:
-        outpath {string} -- path to store all archives in
-    """
-    client = Client(host, port, db_name)
-    client.connect(user, password)
-    logger.info("fetching articles")
-    issues = client.fetch_all_articles(archives=archives, dev=dev, dev_iterations=dev_iterations)
-    with open(outpath,"wb") as f:
-        pkl.dump(issues,f)
 
 class Client :
     """Database client to easily insert and fetch archives
@@ -101,7 +81,7 @@ class Client :
                 '''
             else:
                 insert_query = '''
-                    INSERT INTO archives(title,newspaper,published_date,url,article_text)
+                    INSERT INTO recent_articles(title,newspaper,published_date,url,article_text)
                     VALUES (%s,%s,%s,%s,%s)
                 '''
             values = (article.title, article.newspaper, article.date, article.url, article.text)
@@ -112,15 +92,26 @@ class Client :
         except (Exception, pg.Error):
             logger.error("Unable to insert")
 
+    def insert_match(self, match):
+        """Insert given match in the database
+        
+        Arguments:
+            match {Match} -- Match object between two articles
+        """
+        try :
+            insert_query = '''
+                INSERT INTO matches(id_archive,id_recent_article,score)
+                VALUES (%s,%s,%s)
+            '''
+            values = (match.id_archive, match.id_recent_article, match.score)
+            self.cursor.execute(insert_query,values)
+            self.connection.commit()
+        except AttributeError:
+            logger.error("Connection does not exist")
+        except (Exception, pg.Error):
+            logger.error("Unable to insert")
 
-if __name__ == "__main__" :
-    parser = argparse.ArgumentParser()
-    parser.add_argument("path",help="path to store binary archives in")
-    parser.add_argument("host",help="database host")
-    parser.add_argument("port",help="database port")
-    parser.add_argument("user",help="username to use to connect")
-    parser.add_argument("password",help="password of the user")
-    parser.add_argument("db_name",help="database name")
-    parser.add_argument("--archives",action="store_true",help="wether to fetch archives or recent articles")
-    args = parser.parse_args()
-    main(args.path, args.host, args.port, args.user, args.password, args.db_name, args.archives)
+
+    def close(self):
+        self.cursor.close()
+        self.connection.close()

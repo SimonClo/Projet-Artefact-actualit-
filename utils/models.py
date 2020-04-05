@@ -45,3 +45,10 @@ class SplitArticle:
             function {function(token)} -- process to be applied
         """
         self.tokens = [function(token) for token in self.tokens]
+
+class Match:
+
+    def __init__(self, id_archive, id_recent_article, score):
+        self.id_archive = id_archive
+        self.id_recent_article = id_recent_article
+        self.score = score

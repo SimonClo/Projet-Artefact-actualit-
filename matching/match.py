@@ -6,10 +6,12 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import config
 
-from utils.models import RawArticle, SplitArticle
+from utils.models import RawArticle, SplitArticle, Match
+from matching.distances import cosine_distance, euclidian_distance, word_mover_distance
 
-def main(inpath_articles, inpath_model, inpath_corpus_scores, outpath_matches, distance, num_matches=10):
+def main(inpath_articles, inpath_models, outpath_matches, distance, num_matches=10):
     """Score new processed articles using the trained model, and compare that score with the
     score of the archives articles, using the given distance
     
@@ -21,23 +23,19 @@ def main(inpath_articles, inpath_model, inpath_corpus_scores, outpath_matches, d
         distance {string} -- name of the distance to be computed
     """
     with open(inpath_articles,"rb") as f:
-        new_corpus = pkl.load(f)
-    with open(inpath_model,"rb") as f:
-        model = pkl.load(f)
-    with open(inpath_corpus_scores,"rb") as f:
-        score_matrix = pkl.load(f)
+        new_articles = pkl.load(f)
+    with open(inpath_models,"rb") as f:
+        (topics_model, tf_idf_model, word2vec_model) = pkl.load(f)
     
-    distance = dispatch_distance(distance)
     article_matches = []
-    for article in new_corpus.articles :
-        new_score = model.score(article)
-        best_matches = get_matching(score_matrix,new_score,distance,10)
-        article_matches.append(best_matches)
+    for article in new_articles :
+        best_matches = get_matching(article, topics_model, tf_idf_model, word2vec_model, distance, config.NUM_MATCHES)
+        article_matches += best_matches
     
     with open(outpath_matches,"wb") as f:
         pkl.dump(article_matches,f)
 
-def dispatch_distance(name):
+def get_similarity(index_archive, article, topics_model, tf_idf_model, word2vec_model, distance):
     """Return the distance function that matches name
     
     Arguments:
@@ -49,16 +47,22 @@ def dispatch_distance(name):
     Returns:
         function -- distance function
     """
-    if name=="cosine":
-        return cosine_similarity
-    elif name=="euclidian":
-        return euclidean_distances
+
+    if distance=="cosine":
+        score_archive = [elt[1] for elt in topics_model.scores[index_archive]]
+        score_recent_article = [elt[1] for elt in topics_model.get_article_score(article)]
+        similarity = 1 - cosine_distance(score_recent_article, score_archive)
+    elif distance=="euclidian":
+        score_archive = [elt[1] for elt in topics_model.scores[index_archive]]
+        score_recent_article = [elt[1] for elt in topics_model.get_article_score(article)]
+        similarity = 1 - cosine_distance(score_recent_article, score_archive)
     else:
-        raise Exception(f"distance {name} not implemented")
+        raise Exception(f"distance {distance} not implemented")
+    return similarity
 
 
 
-def get_matching(score_matrix,new_score,distance,num_matches):
+def get_matching(article, topics_model, tf_idf_model, word2vec_model, distance, num_matches):
     """Returns index of the best matches for the article
     
     Arguments:
@@ -72,20 +76,19 @@ def get_matching(score_matrix,new_score,distance,num_matches):
     Returns:
         {list(int)} -- list of index for articles in the score matrix
     """
-    distances = np.zeros((score_matrix.shape[0]))
-    for i in range(score_matrix.shape[0]) :
-        distances[i] = distance(score_matrix[i],new_score)
-        sorted_indexes = np.argsort(distances)
-    return sorted_indexes[:num_matches]
+    similarities = []
+    for index_archive in range(len(topics_model.articles)) :
+        similarities.append(get_similarity(index_archive, article, topics_model, tf_idf_model, word2vec_model, distance))
+    sorted_indexes = np.argsort(similarities)[-num_matches:]
+    return [Match(topics_model.articles[index].id, article.id, similarities[index]) for index in sorted_indexes]
 
     
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("new_articles_path",help="path of the new article")
-    parser.add_argument("model_path",help="path the trained model was stored in")
-    parser.add_argument("scores_path",help="path the archives scores were stored in")
+    parser.add_argument("new_articles_path",help="path of the new articles")
+    parser.add_argument("models_path",help="path the trained model was stored in")
     parser.add_argument("distance",help="distance used to compute similarity")
     parser.add_argument("outpath",help="path to store the best matches in")
     args = parser.parse_args()
-    main(args.new_articles_path, args.model_path, args.scores_path, args.outpath, args.distance)
+    main(args.new_articles_path, args.models_path, args.outpath, args.distance)

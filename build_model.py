@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from data_access import db_access
+from data_access import article_retrieval
 from preprocessing import preprocess
 from modelling import modelling
 
@@ -28,7 +28,7 @@ else:
     for logger in loggers: logger.setLevel(logging.WARNING)
 
 # Main computation
-db_access.main(config.PATH_RAW_ARCHIVES, config.DB_HOST, config.DB_PORT, config.DB_USER, 
+article_retrieval.main(config.PATH_RAW_ARCHIVES, config.DB_HOST, config.DB_PORT, config.DB_USER, 
     config.DB_PASSWORD, config.DB_NAME, archives=True, dev=config.DEV_MODE, dev_iterations=config.DEV_MODE_ITERATIONS
 )
 preprocess.main(config.PATH_RAW_ARCHIVES, config.PATH_PROCESSED_ARCHIVES)
