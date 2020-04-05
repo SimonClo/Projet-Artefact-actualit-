@@ -11,7 +11,7 @@ DB_PASSWORD = "postgres"
 # Dev mode for pipeline testing
 
 DEV_MODE = True
-DEV_MODE_ITERATIONS = 500
+DEV_MODE_ITERATIONS = 100
 
 # Matching variables
 
@@ -29,3 +29,22 @@ PATH_RAW_ARCHIVES = os.path.join(PATH_MODELLING,"raw_articles.pkl")
 PATH_PROCESSED_ARCHIVES = os.path.join(PATH_MODELLING,"processed_articles.pkl")
 PATH_MODEL = os.path.join(PATH_MODELLING,"model.pkl")
 PATH_SCORES = os.path.join(PATH_MODELLING,"scores.pkl")
+
+# Topic modeling
+
+NUM_TOPICS = 5
+LDA_WORDS_NO_ABOVE = 1
+LDA_ITERATIONS = 50
+LDA_PASSES = 10
+
+# TF-IDF
+
+TF_IDF_WORDS_NO_ABOVE = 2
+NUM_KEYWORDS = 20
+
+# Word2Vec
+
+W2V_SIZE = 100
+W2V_WINDOW = 5
+W2V_WORDS_NO_ABOVE = 3
+W2V_ITERATIONS = 10

@@ -14,29 +14,10 @@ import pyLDAvis.gensim
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.models import RawArticle, SplitArticle
-import re
-
-from modelling.force_topics import get_eta
-from modelling.models import TopicsAndTfIdfModel
+import config
+from modelling.models import TfIdfModel, TopicsModel, Word2VecModel
 
 logger = logging.getLogger(__name__)
-
-def get_titles_and_texts(corpus):
-    titles = []
-    articles = []
-    for article in corpus:
-        titles.append(article.title)
-        articles.append(article.tokens)
-    logger.info('Created titles and articles')
-    return (titles, articles)
-
-def get_texts_from_splited_articles(splited_articles):
-    texts = []
-    for article in splited_articles:
-        text = ' '.join(article)
-        texts.append(text)
-    return texts
-
 
 def main(inpath, outpath):
     """
@@ -47,90 +28,17 @@ def main(inpath, outpath):
     """
     # openning preprocessed articles
     with open(inpath,"rb") as f:
-        corpus = pkl.load(f)
+        archives = pkl.load(f)    
 
-    # Get titles and articles texts
-    (titles, articles) = get_titles_and_texts(corpus)
-
-    # Get non splited texts for tf_idf
-    texts = get_texts_from_splited_articles(articles)
-
-    # Choose the parametres
-    words_no_above = 1 # delete words that are in more than ... of the articles, works for topic modelling and keywords !
-    # put 1 for tests
-    NUM_TOPICS = 5
-    num_keywords = 20 # nb of keywords
-
-    # create dictionary and corpus
-    dictionary = corpora.Dictionary(articles)
-    dictionary.filter_extremes(no_above=words_no_above)
-    corpus = [dictionary.doc2bow(article) for article in articles]
-    logger.info('Created dictionary and corpus')
-
-    # get eta to force topics
-    eta = get_eta(NUM_TOPICS, dictionary)
-
-    # create lda model with gensim
-    lda_progress = LDAProgress(10)
-    ldamodel = gensim.models.ldamodel.LdaModel(
-    corpus, num_topics = NUM_TOPICS, id2word=dictionary, passes=10, per_word_topics=True, 
-        update_every=1, iterations=50, eta=eta
-    )
-    lda_progress.close()
-
-    logger.info('Created gensim model')
-
-    # print the topics (debug)
-    logger.debug('Topics:')
-    topics = ldamodel.print_topics(num_words=5)
-    for topic in topics:
-        logger.debug(topic)
-
-    # save model and scores in given outpath file
-    model = TopicsAndTfIdfModel(ldamodel, texts, dictionary, num_keywords, words_no_above)
+    # training all models
+    topics_model = TopicsModel(archives, config.LDA_WORDS_NO_ABOVE, config.NUM_TOPICS, config.LDA_PASSES, config.LDA_ITERATIONS)
+    tf_idf_model = TfIdfModel(archives, config.NUM_KEYWORDS, config.TF_IDF_WORDS_NO_ABOVE)
+    word2vec_model = Word2VecModel(archives, config.W2V_SIZE, config.W2V_WINDOW, config.W2V_WORDS_NO_ABOVE, config.W2V_ITERATIONS)
+    
+    #saving models
     with open(outpath,"wb") as f:
-        pkl.dump(model,f)
+        pkl.dump((topics_model, tf_idf_model, word2vec_model),f)
     logging.info('Saved the model in '+outpath)
-
-class LDAProgress:
-    """A logger for progress of the LDA model
-    """
-
-    def __init__(self,n_iter):
-        self.logger = logging.getLogger("gensim")
-        self.logger.setLevel(logging.INFO)
-        self.handler = FilterHandler(n_iter)
-        self.logger.addHandler(self.handler)
-
-    def close(self):
-        self.handler.progress.close()
-        self.logger.removeHandler(self.handler)
-
-class FilterHandler(logging.StreamHandler):
-    """A handler that intercepts logging event based on
-    filtering rules
-    """
-
-    def __init__(self, n_epochs, stream=None):
-        super().__init__(stream)
-        self.epoch = 0
-        self.progress = tqdm(total = n_epochs, desc="processing lda : ")
-        self.n_epochs = n_epochs
-        self.progress.update()
-
-    def emit(self, record):
-        try:
-            msg = self.format(record)
-            msg = record.getMessage()
-            if re.match(r"^PROGRESS:*", msg):
-                epoch = int(msg[15])
-                if epoch != self.epoch:
-                    self.epoch += 1
-                    self.progress.update()
-        except RecursionError:
-            raise
-        except Exception:
-            self.handleError(record)
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
