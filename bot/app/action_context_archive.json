@@ -1,0 +1,15 @@
+[
+  {
+    "Action": "archive",
+    "Context": "",
+    "Message": ["Voici une archive en lien avec l'actualit\u00e9 ci-dessus. Cette archive vous convient-elle ? Voulez-vous voir un autre article d'actualit\u00e9 ?",
+    "J'espere que cette archive vous convient, en voulez-vous une autre ?"],
+    "Quick Replies": ["Archive","Article","Non"]
+  },
+  {
+    "Action": "archive",
+    "Context": "from_archive",
+    "Message": ["Voici une autre archive. Cette archive vous convient-elle ? Voulez-vous voir un autre article d'actualit\u00e9 ?"],
+    "Quick Replies": ["Archive","Article","Non"]
+  }
+]

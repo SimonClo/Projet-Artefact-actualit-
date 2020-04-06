@@ -1,0 +1,15 @@
+[
+  {
+    "Action": "article",
+    "Context": "",
+    "Message": ["Voici un premier article d'actualit\u00e9. Souhaitez vous en consulter un autre ou une archive ?",
+    "J'espere que cette actualit\u00e9 vous convient, en voulez-vous une autre ?"],
+    "Quick Replies": ["Article","Archive","Non"]
+  },
+  {
+    "Action": "article",
+    "Context": "repeat",
+    "Message": ["Voici un autre article d'actualit\u00e9.  Souhaitez vous en consulter un autre ou une archive ?"],
+    "Quick Replies": ["Article","Archive","Non"]
+  }
+]
