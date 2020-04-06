@@ -20,11 +20,12 @@ def main(inpath, host, port, user, password, db_name):
     with open(inpath,"rb") as f:
         matches = pkl.load(f)
 
-    logger.info("inserting matches")
     client = Client(host, port, db_name)
     client.connect(user, password)
     for match in matches:
         client.insert_match(match)
+    
+    logger.info(f"inserted {len(matches)} matches")
     client.close()
 
 if __name__ == "__main__" :

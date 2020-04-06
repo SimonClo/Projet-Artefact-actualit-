@@ -4,12 +4,16 @@ import argparse
 import pickle as pkl
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+from tqdm import tqdm
+import logging
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import config
 
 from utils.models import RawArticle, SplitArticle, Match
 from matching.distances import cosine_distance, euclidian_distance, word_mover_distance
+
+logger = logging.getLogger(__name__)
 
 def main(inpath_articles, inpath_models, outpath_matches, distance, num_matches=10):
     """Score new processed articles using the trained model, and compare that score with the
@@ -18,19 +22,23 @@ def main(inpath_articles, inpath_models, outpath_matches, distance, num_matches=
     Arguments:
         inpath_articles {string} -- path of the new split articles
         inpath_model {string} -- path of the trained model
-        inpath_corpus_scores {string} -- path of the archive scores
         outpath_matches {string} -- path where the matches should be stored
         distance {string} -- name of the distance to be computed
+        num_matches {int} -- number of matches to keep
     """
     with open(inpath_articles,"rb") as f:
         new_articles = pkl.load(f)
     with open(inpath_models,"rb") as f:
         (topics_model, tf_idf_model, word2vec_model) = pkl.load(f)
-    
+    logger.info(f"loaded {len(new_articles)} new articles")
     article_matches = []
+
+    progress = tqdm(total=len(new_articles)*len(topics_model.articles), desc="processing matches : ")
     for article in new_articles :
-        best_matches = get_matching(article, topics_model, tf_idf_model, word2vec_model, distance, config.NUM_MATCHES)
+        best_matches = get_matching(article, topics_model, tf_idf_model, word2vec_model, distance, config.NUM_MATCHES, progress)
         article_matches += best_matches
+    progress.close()
+    logger.info("matched articles")
     
     with open(outpath_matches,"wb") as f:
         pkl.dump(article_matches,f)
@@ -39,13 +47,18 @@ def get_similarity(index_archive, article, topics_model, tf_idf_model, word2vec_
     """Return the distance function that matches name
     
     Arguments:
-        name {string} -- name of the distance function
+        index_archive {int} -- index of the archive we are matching
+        article {SplitArticle} -- recent article we are matching
+        topics_model {TopicsModel} -- trained lda model on the corpus
+        tf_idf_model {TfIdfModel} -- trained tf-idf model on the corpus
+        word2vec_model {Word2VecModel} -- trained word2vec_mode
+        distance {string} -- distance we want to compute
     
     Raises:
         Exception: Raise an exception if the given distance is not recognized
     
     Returns:
-        function -- distance function
+        float -- similarity score between 0 and 1
     """
 
     if distance=="cosine":
@@ -62,23 +75,27 @@ def get_similarity(index_archive, article, topics_model, tf_idf_model, word2vec_
 
 
 
-def get_matching(article, topics_model, tf_idf_model, word2vec_model, distance, num_matches):
+def get_matching(article, topics_model, tf_idf_model, word2vec_model, distance, num_matches, progress=None):
     """Returns index of the best matches for the article
     
     Arguments:
-        score_matrix {np.ndarray(n_articles,dim_score)} -- matrix of scores from all articles
-        new_score {np.ndarray(article)} -- score of the new article to compare with others
-        distance {function(np.ndarra(score_dim),np.ndarray(score_dim))} -- distance used to compare the two articles
-    
-    Keyword Arguments:
-        num_matches {int} -- number of matches to return (default: {10})
+        article {SplitArticle} -- recent article we are matching
+        topics_model {TopicsModel} -- trained lda model on the corpus
+        tf_idf_model {TfIdfModel} -- trained tf-idf model on the corpus
+        word2vec_model {Word2VecModel} -- trained word2vec_mode
+        distance {string} -- distance we want to compute
+        num_matches {int} -- number of matches to be computed
+
+    Keywords Arguments:
+        progress {tqdm} -- progress bar for the matching (default: None)
     
     Returns:
-        {list(int)} -- list of index for articles in the score matrix
+        {list(Match)} -- list of index for articles in the score matrix
     """
     similarities = []
     for index_archive in range(len(topics_model.articles)) :
         similarities.append(get_similarity(index_archive, article, topics_model, tf_idf_model, word2vec_model, distance))
+        if progress : progress.update()
     sorted_indexes = np.argsort(similarities)[-num_matches:]
     return [Match(topics_model.articles[index].id, article.id, similarities[index]) for index in sorted_indexes]
 
