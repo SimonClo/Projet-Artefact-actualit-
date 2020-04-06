@@ -44,7 +44,7 @@ def get_keywords_from_text(doc, nb_vectors, tfidf_transformer, cv):
     
     return keywords
 
-def get_articles_keywords(articles, nb_vectors, words_no_above):
+def get_articles_keywords(articles, nb_vectors, words_no_above, progress=None):
     cv=CountVectorizer(max_df=words_no_above, min_df=0, max_features=10000)
     word_count_vector=cv.fit_transform(articles)
 
@@ -54,5 +54,6 @@ def get_articles_keywords(articles, nb_vectors, words_no_above):
     scores = []
     for article in articles:
         scores.append(get_keywords_from_text(article, nb_vectors, tfidf_transformer, cv))
+        if progress : progress.update()
     
     return scores, cv, tfidf_transformer
