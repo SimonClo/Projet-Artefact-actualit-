@@ -9,5 +9,5 @@ import config
 if __name__ == "__main__" :
     client = Client(config.DB_HOST,config.DB_PORT,config.DB_NAME)
     client.connect(config.DB_USER,config.DB_PASSWORD)
-    articles = client.fetch_all_archives()
+    articles = client.fetch_all_articles()
     print(len(articles))
