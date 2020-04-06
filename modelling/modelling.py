@@ -33,7 +33,9 @@ def main(inpath, outpath):
     # training all models
     topics_model = TopicsModel(archives, config.LDA_WORDS_NO_ABOVE, config.NUM_TOPICS, config.LDA_PASSES, config.LDA_ITERATIONS)
     tf_idf_model = TfIdfModel(archives, config.NUM_KEYWORDS, config.TF_IDF_WORDS_NO_ABOVE)
+    logger.info("trained tf-idf model")
     word2vec_model = Word2VecModel(archives, config.W2V_SIZE, config.W2V_WINDOW, config.W2V_WORDS_NO_ABOVE, config.W2V_ITERATIONS)
+    logger.info("trained word2vec model")
     
     #saving models
     with open(outpath,"wb") as f:

@@ -1,14 +1,13 @@
-import argparse
-import logging
-
-from data_access import article_retrieval
+from data_access import article_retrieval, match_insertion
 from preprocessing import preprocess
-from modelling import modelling
+from matching import match
 
 import config
+import logging
+import argparse
 
 # Loggers setup
-loggers = [logging.getLogger(name) for name in ["data_access","preprocessing","modelling"]]
+loggers = [logging.getLogger(name) for name in ["data_access","preprocessing","matching"]]
 sysout = logging.StreamHandler()
 formatter = logging.Formatter("%(name)s>%(levelname)s: %(message)s")
 sysout.setFormatter(formatter)
@@ -27,10 +26,8 @@ elif args.debug:
 else:
     for logger in loggers: logger.setLevel(logging.WARNING)
 
-# Main computation
-article_retrieval.main(config.PATH_RAW_ARCHIVES, config.DB_HOST, config.DB_PORT, config.DB_USER, 
-    config.DB_PASSWORD, config.DB_NAME, archives=True, dev=config.DEV_MODE, dev_iterations=config.DEV_MODE_ITERATIONS
-)
-preprocess.main(config.PATH_RAW_ARCHIVES, config.PATH_PROCESSED_ARCHIVES)
-modelling.main(config.PATH_PROCESSED_ARCHIVES, config.PATH_MODELS)
-    
+article_retrieval.main(config.PATH_RAW_ARTICLES, config.DB_HOST, config.DB_PORT, 
+    config.DB_USER, config.DB_PASSWORD, config.DB_NAME, archives=False)
+preprocess.main(config.PATH_RAW_ARTICLES, config.PATH_PROCESSED_ARTICLES)
+match.main(config.PATH_PROCESSED_ARTICLES, config.PATH_MODELS, config.PATH_MATCHES, config.DISTANCE, config.NUM_MATCHES)
+match_insertion.main(config.PATH_MATCHES, config.DB_HOST, config.DB_PORT, config.DB_USER, config.DB_PASSWORD, config.DB_NAME)
