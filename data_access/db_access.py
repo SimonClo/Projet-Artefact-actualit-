@@ -1,26 +1,8 @@
 import psycopg2 as pg 
-import logging
-import pickle as pkl
-import os
-import sys
-import argparse
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from utils.models import RawArticle
-import config
+import logging
 
-def main(argv):
-    """Store all archives in a binary file
-    
-    Arguments:
-        argv {list(string)} -- string args, must provide path attribute
-    """
-    client = Client(config.DB_HOST,config.DB_PORT,config.DB_NAME)
-    client.connect(config.DB_USER,config.DB_PASSWORD)
-    issues = client.fetch_all_archives()
-    with open(argv.path,"wb") as f:
-        pkl.dump(issues,f)
+logger = logging.getLogger(__name__)
 
 class Client :
     """Database client to easily insert and fetch archives
@@ -55,50 +37,81 @@ class Client :
             self.cursor = self.connection.cursor()
             
         except (Exception, pg.Error):
-            logging.error("Connection failed")
+            logger.error("Connection failed")
 
-    def fetch_all_archives(self):
-        """Fetch all archives in the database
+    def fetch_all_articles(self, archives=True, dev=True, dev_iterations=10):
+        """Fetch all articles in the database
         
         Returns:
             list(archives) -- a list of article objects
         """
         try :
-            self.cursor.execute(
-                '''
-                SELECT id, title, newspaper, published_date, url, article_text FROM archives
-                '''
-            )
+            if archives:
+                self.cursor.execute(
+                    '''
+                    SELECT id, title, newspaper, published_date, url, article_text FROM archives
+                    '''
+                )
+            else:
+                self.cursor.execute(
+                    '''
+                    SELECT id, title, newspaper, published_date, url, article_text FROM recent_articles
+                    '''
+                )
             records = self.cursor.fetchall()
-            archives = [RawArticle(*record) for record in records]
-            if config.DEV_MODE : archives = archives[:config.DEV_MODE_ITERATIONS]
-            return archives
+            articles = [RawArticle(*record) for record in records]
+            if dev : articles = articles[:dev_iterations]
+            return articles
         except AttributeError:
-            logging.error("Connection does not exist")
+            logger.error("Connection does not exist")
         except (Exception, pg.Error):
-            logging.error("Unable to retrieve archives")
+            logger.error("Unable to retrieve archives")
 
-    def insert_archive(self,article):
-        """Insert the given article in the database
+    def insert_article(self,article,archive = True):
+        """Insert the given archive in the database
         
         Arguments:
             article {Article object} -- the article to be inserted
         """
         try :
-            insert_query = '''
-                INSERT INTO archives(title,newspaper,published_date,url,article_text)
-                VALUES (%s,%s,%s,%s,%s)
-            '''
+            if archive:
+                insert_query = '''
+                    INSERT INTO archives(title,newspaper,published_date,url,article_text)
+                    VALUES (%s,%s,%s,%s,%s)
+                '''
+            else:
+                insert_query = '''
+                    INSERT INTO recent_articles(title,newspaper,published_date,url,article_text)
+                    VALUES (%s,%s,%s,%s,%s)
+                '''
             values = (article.title, article.newspaper, article.date, article.url, article.text)
             self.cursor.execute(insert_query,values)
             self.connection.commit()
         except AttributeError:
-            logging.error("Connection does not exist")
+            logger.error("Connection does not exist")
         except (Exception, pg.Error):
-            logging.error("Unable to insert")
+            logger.error("Unable to insert")
 
-if __name__ == "__main__" :
-    parser = argparse.ArgumentParser()
-    parser.add_argument("path",help="path to store binary archives in")
-    args = parser.parse_args()
-    main(args)
+    def insert_match(self, match):
+        """Insert given match in the database
+        
+        Arguments:
+            match {Match} -- Match object between two articles
+        """
+        try :
+            insert_query = '''
+                INSERT INTO matches(id_archive,id_recent_article,score)
+                VALUES (%s,%s,%s)
+            '''
+            values = (match.id_archive, match.id_recent_article, match.score)
+            self.cursor.execute(insert_query,values)
+            self.connection.commit()
+        except AttributeError:
+            logger.error("Connection does not exist")
+        except (Exception, pg.Error):
+            logger.error("Unable to insert")
+
+
+    def close(self):
+        self.cursor.close()
+        self.connection.close()

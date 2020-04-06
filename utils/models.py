@@ -46,31 +46,9 @@ class SplitArticle:
         """
         self.tokens = [function(token) for token in self.tokens]
 
-class ProcessedCorpus:
-    """A representation of all articles in a corpus
-    """
-    def __init__(self,articles):
-        """Creates corpus from a list of Tokenized articles
-        
-        Arguments:
-            articles {list(SpliArticle)} -- Split articles in the corpus
-        """
-        self.articles = articles
+class Match:
 
-    def apply_to_articles(self,function):
-        """Apply a process to all articles in corpus
-        
-        Arguments:
-            function {function(list(token))} -- process to apply to all articles
-        """
-        for article in self.articles:
-            article.tokens = function(article.tokens)
-
-    def apply_to_tokens_in_articles(self,function):
-        """Apply a process to all tokens of all articles from the corpus
-        
-        Arguments:
-            function {fucntion(token)} -- process to apply to all tokens
-        """
-        for split_article in self.articles :
-            split_article.apply_to_tokens(function)
+    def __init__(self, id_archive, id_recent_article, score):
+        self.id_archive = id_archive
+        self.id_recent_article = id_recent_article
+        self.score = score
