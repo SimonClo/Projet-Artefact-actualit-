@@ -10,12 +10,12 @@ DB_PASSWORD = "postgres"
 
 # Dev mode for pipeline testing
 
-DEV_MODE = True
+DEV_MODE = False
 DEV_MODE_ITERATIONS = 100
 
 # Matching variables
 
-NUM_MATCHES = 10
+NUM_MATCHES = 20
 DISTANCE = "wordmover"
 
 # Paths for the modelling pipeline
@@ -59,3 +59,4 @@ W2V_SIZE = 100
 W2V_WINDOW = 5
 W2V_WORDS_NO_ABOVE = 3
 W2V_ITERATIONS = 10
+W2V_BATCH_SIZE = 10000

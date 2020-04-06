@@ -123,7 +123,9 @@ class TfIdfModel(Model):
         self.num_keywords = num_keywords
         self.words_no_above = words_no_above
         texts = self.get_texts_from_splited_articles(articles)
-        (self.scores, self.count_vectorizer, self.tf_idf_transformer) = get_articles_keywords(texts, self.num_keywords, self.words_no_above)
+        progress = tqdm(total=len(articles), desc="processing tf-idf : ")
+        (self.scores, self.count_vectorizer, self.tf_idf_transformer) = get_articles_keywords(texts, self.num_keywords, self.words_no_above, progress=progress)
+        progress.close()
 
     # get tf idf keywords
     def get_article_score(self, article):
@@ -144,7 +146,7 @@ class TfIdfModel(Model):
 
 class Word2VecModel(Model):
 
-    def __init__(self, articles, size, window, words_no_above, iterations):
+    def __init__(self, articles, size, window, words_no_above, iterations, batch_size):
         """A word2vec model wrapper 
         
         Arguments:
@@ -159,11 +161,13 @@ class Word2VecModel(Model):
         self.window = window
         self.words_no_above = words_no_above
         self.iterations = iterations
+        self.batch_size = batch_size
+        self.n_tokens = sum([len(article.tokens) for article in articles])
         self.train()
 
     def train(self):
         token_lists = [article.tokens for article in self.articles]
-        w2v_progress = W2VProgress(self.iterations)
+        w2v_progress = W2VProgress(self.iterations*self.n_tokens/self.batch_size)
         model = Word2Vec(sentences=token_lists, size = self.size, window = self.window, 
             min_count=self.words_no_above, workers=cpu_count(), iter=self.iterations, callbacks=[w2v_progress])
         w2v_progress.close()

@@ -34,13 +34,13 @@ def main(inpath, outpath):
     topics_model = TopicsModel(archives, config.LDA_WORDS_NO_ABOVE, config.NUM_TOPICS, config.LDA_PASSES, config.LDA_ITERATIONS)
     tf_idf_model = TfIdfModel(archives, config.NUM_KEYWORDS, config.TF_IDF_WORDS_NO_ABOVE)
     logger.info("trained tf-idf model")
-    word2vec_model = Word2VecModel(archives, config.W2V_SIZE, config.W2V_WINDOW, config.W2V_WORDS_NO_ABOVE, config.W2V_ITERATIONS)
+    word2vec_model = Word2VecModel(archives, config.W2V_SIZE, config.W2V_WINDOW, config.W2V_WORDS_NO_ABOVE, config.W2V_ITERATIONS, config.W2V_BATCH_SIZE)
     logger.info("trained word2vec model")
     
     #saving models
     with open(outpath,"wb") as f:
         pkl.dump((topics_model, tf_idf_model, word2vec_model),f)
-    logging.info('Saved the model in '+outpath)
+    logger.info('Saved the model in '+outpath)
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
