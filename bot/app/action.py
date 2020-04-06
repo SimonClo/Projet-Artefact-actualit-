@@ -2,7 +2,7 @@ import json
 import dialogflow
 import os
 import random as rd
-from app.db_access import get_latest_article
+from app.db_access import get_latest_article, get_matching_archive
 import config
 from app import db
 
@@ -78,10 +78,11 @@ class Article(Action):
         return resp
 
     def get_article(user):
-        if not user.last_article_seen or user.last_article_seen == config.NUM_ARTICLES:
-            user.last_article_seen = 0
-        title, url = get_latest_article(user.last_article_seen)
-        user.last_article_seen += 1
+        if not user.last_article_index or user.last_article_index == config.NUM_ARTICLES:
+            user.last_article_index = 0
+        article_id, title, url = get_latest_article(user.last_article_index)
+        user.last_article_index += 1
+        user.last_article_id = article_id
         db.session.commit()
         return {"text":f"{title} :\n {url}"}
 
@@ -90,11 +91,16 @@ class Archive(Action):
         arc_json = json.load(json_data)
 
     def get_response(user):
-        article = Archive.get_archive(user.id)
+        article = Archive.get_archive(user)
         print(user.id)
         app.sender.callSendAPI(user.id, article)
         resp = Action.form_resp(user,Archive.arc_json)
         return resp
 
-    def get_archive(sender_psid):
-        return {"text":"Voici une archive"}
+    def get_archive(user):
+        if not user.rank_last_archive or user.rank_last_archive == config.NUM_ARCHIVES:
+            user.rank_last_archive = 0
+        title, url, year = get_matching_archive(user.last_article_id, user.rank_last_archive)
+        user.rank_last_archive += 1
+        db.session.commit()
+        return {"text":f"de l'année {year} :\n{title} :\n {url}"}

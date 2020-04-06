@@ -13,6 +13,7 @@ DB_USER = "postgres"
 DB_PASSWORD = "postgres"
 
 NUM_ARTICLES = 3
+NUM_ARCHIVES = 5
 
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY')
