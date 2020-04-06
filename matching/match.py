@@ -3,7 +3,6 @@ import os
 import argparse
 import pickle as pkl
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 from tqdm import tqdm
 import logging
 
@@ -61,14 +60,12 @@ def get_similarity(index_archive, article, topics_model, tf_idf_model, word2vec_
         float -- similarity score between 0 and 1
     """
 
-    if distance=="cosine":
-        score_archive = [elt[1] for elt in topics_model.scores[index_archive]]
-        score_recent_article = [elt[1] for elt in topics_model.get_article_score(article)]
-        similarity = 1 - cosine_distance(score_recent_article, score_archive)
-    elif distance=="euclidian":
-        score_archive = [elt[1] for elt in topics_model.scores[index_archive]]
-        score_recent_article = [elt[1] for elt in topics_model.get_article_score(article)]
-        similarity = 1 - cosine_distance(score_recent_article, score_archive)
+    if distance == "cosine":
+        similarity = 1 - cosine_distance(topics_model, article, index_archive)
+    elif distance == "euclidian":
+        similarity = sigmoid(euclidian_distance(topics_model, article, index_archive))
+    elif distance == "wordmover":
+        similarity = sigmoid(word_mover_distance(word2vec_model, tf_idf_model, article, index_archive))
     else:
         raise Exception(f"distance {distance} not implemented")
     return similarity
@@ -99,7 +96,8 @@ def get_matching(article, topics_model, tf_idf_model, word2vec_model, distance, 
     sorted_indexes = np.argsort(similarities)[-num_matches:]
     return [Match(topics_model.articles[index].id, article.id, similarities[index]) for index in sorted_indexes]
 
-    
+def sigmoid(x):
+    return 1/(1 + np.exp(-x))
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()

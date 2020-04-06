@@ -16,7 +16,7 @@ DEV_MODE_ITERATIONS = 100
 # Matching variables
 
 NUM_MATCHES = 10
-DISTANCE = "cosine"
+DISTANCE = "wordmover"
 
 # Paths for the modelling pipeline
 
