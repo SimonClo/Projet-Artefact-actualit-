@@ -2,13 +2,16 @@ import json
 import dialogflow
 import os
 import random as rd
+from app.db_access import get_latest_article
+import config
+from app import db
 
 import app.sender
 
 PROJECT_ID = os.getenv('DIALOGFLOW_PROJECT_ID')
 
 class ActionManager:
-    with open('app/next_action.json') as json_data:
+    with open('./app/next_action.json') as json_data:
         next_json = json.load(json_data)
 
     def __init__(self):
@@ -69,13 +72,18 @@ class Article(Action):
 
     def get_response(user):
         print('ok')
-        article = Article.get_article(user.id)
+        article = Article.get_article(user)
         app.sender.callSendAPI(user.id, article)
         resp = Action.form_resp(user,Article.art_json)
         return resp
 
-    def get_article(sender_psid):
-        return {"text":"Voici un article"}
+    def get_article(user):
+        if not user.last_article_seen or user.last_article_seen == config.NUM_ARTICLES:
+            user.last_article_seen = 0
+        title, url = get_latest_article(user.last_article_seen)
+        user.last_article_seen += 1
+        db.session.commit()
+        return {"text":f"{title} :\n {url}"}
 
 class Archive(Action):
     with open('app/action_context_archive.json') as json_data:
