@@ -1,9 +1,11 @@
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from config import Config
 
 app = Flask(__name__)
 app.config.from_object(Config)
-import routes
+db = SQLAlchemy(app)
+import routes, models
 
 if __name__ == "__main__":
     app.run()
