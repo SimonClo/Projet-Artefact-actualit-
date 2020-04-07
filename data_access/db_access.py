@@ -1,5 +1,5 @@
 import psycopg2 as pg 
-from utils.models import RawArticle
+from utils.models import RawArticle, Match
 import logging
 
 logger = logging.getLogger(__name__)
@@ -91,6 +91,29 @@ class Client :
             logger.error("Connection does not exist")
         except (Exception, pg.Error):
             logger.error("Unable to insert")
+
+    def get_match_recent_article(self, id_recent_article):
+        """Get matches with the indicated recent article
+        
+        Arguments:
+            id_recent_article {int} -- id of the recent article
+        
+        Returns:
+            list(Match) -- list of matches
+        """
+        try :
+            get_query = '''
+                SELECT id, id_recent_article, id_archive, score FROM matches
+                WHERE id_recent_article = %s
+            '''
+            self.cursor.execute(get_query,(id_recent_article,))
+            records = self.cursor.fetchall()
+            return [Match(record[2], record[1], record[3]) for record in records]
+        except AttributeError:
+            logger.error("Connection does not exist")
+        except (Exception, pg.Error) as e:
+            print(e)
+            logger.error("Could not find matches")
 
     def insert_match(self, match):
         """Insert given match in the database

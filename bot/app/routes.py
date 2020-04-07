@@ -1,21 +1,14 @@
 from flask import request
-import requests
 
 from app import app, db
 
-from app.user import User
-from app.action import ActionManager, Action
+from user import User
+from app.sender import handle_message, callSendAPI, handle_postback
 
-
-act_man = ActionManager()
-
-PAGE_ACCESS_TOKEN = open('Token_fb.txt','r').readline()
-FB_API_URL = "https://graph.facebook.com/v2.6/me/messages"
 
 @app.route("/")
 def hello():
     return "hello"
-
 
 @app.route("/webhook", methods=["POST", "GET"])
 def webhook():
@@ -31,6 +24,7 @@ def webhook():
                     db.session.add(user)
                     db.session.commit()
                 if 'message' in webhook_event:
+                    print(sender_psid)
                     handle_message(sender_psid,webhook_event['message'])
                 elif 'postback' in webhook_event:
                     handle_postback(sender_psid,webhook_event['postback'])
@@ -51,38 +45,7 @@ def webhook():
         else:
             return "nope", 403
 
+@app.route('/webhook_df', methods=['POST'])
+def webhook_df():
+    return {}
 
-def handle_message(sender_psid, received_message):
-    resp = {}
-    user = User.query.filter_by(_id=int(sender_psid)).first()
-    print(user.prev_action)
-
-    if 'text' in received_message:
-        intent = act_man.get_intent(received_message['text'])
-        action = act_man.next_action(user, intent)
-        user.prev_action = action
-        db.session.commit()
-
-        resp = Action.get_response(user)
-
-    callSendAPI(sender_psid, resp)
-
-def handle_postback(sender_psid, received_postback):
-    payload = received_postback['payload']
-    resp = {}
-    if payload == 'yes':
-        resp['text'] = 'Merci'
-    elif payload == 'no':
-        resp['text'] = 'Renvoyez une photo svp'
-
-    callSendAPI(sender_psid, resp)
-
-def callSendAPI(sender_psid, response):
-    request_body = {
-        "recipient": {"id": sender_psid},
-        "message": response
-    }
-    auth= {"access_token": PAGE_ACCESS_TOKEN}
-    req = requests.post(FB_API_URL, params=auth, json=request_body)
-
-    return req.json()

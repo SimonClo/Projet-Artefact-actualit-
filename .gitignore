@@ -3,6 +3,7 @@
 *.ipynb
 bot/Token.txt
 bot/Token_fb.txt
+bot/archiviste-mimbag.json
 bot/env
 .vscode
 data/*
