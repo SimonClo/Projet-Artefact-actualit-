@@ -37,6 +37,7 @@ if DEV_MODE:
 else:
     PATH_MATCHING = os.path.join(os.getcwd(),"data","matching")
 os.makedirs(PATH_MATCHING, exist_ok=True)
+PATH_ALL_ARTICLES = os.path.join(PATH_MATCHING,"all_articles.pkl")
 PATH_RAW_ARTICLES = os.path.join(PATH_MATCHING,"raw_articles.pkl")
 PATH_PROCESSED_ARTICLES = os.path.join(PATH_MATCHING,"processed_articles.pkl")
 PATH_MATCHES = os.path.join(PATH_MATCHING,"matches.pkl")

@@ -25,7 +25,7 @@ def get_latest_article(num_article):
     try :
         cursor.execute(
             '''
-            SELECT id, title, published_date, url FROM recent_articles ORDER BY published_date DESC
+            SELECT id, title, published_date, url, date_added FROM recent_articles ORDER BY date_added DESC
             '''
         )
         records = cursor.fetchall()

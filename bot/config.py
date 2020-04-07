@@ -6,8 +6,8 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = 'archiviste-mimbag.json'
 
 # database credentials
 
-DB_HOST = "localhost"
-DB_PORT = 8765
+DB_HOST = "database"
+DB_PORT = 5432
 DB_NAME = "artefact_archives"
 DB_USER = "postgres"
 DB_PASSWORD = "postgres"
