@@ -2,13 +2,16 @@ import json
 import dialogflow
 import os
 import random as rd
+from app.db_access import get_latest_article, get_matching_archive
+import config
+from app import db
 
 import app.sender
 
 PROJECT_ID = os.getenv('DIALOGFLOW_PROJECT_ID')
 
 class ActionManager:
-    with open('app/next_action.json') as json_data:
+    with open('./app/next_action.json') as json_data:
         next_json = json.load(json_data)
 
     def __init__(self):
@@ -69,24 +72,35 @@ class Article(Action):
 
     def get_response(user):
         print('ok')
-        article = Article.get_article(user.id)
+        article = Article.get_article(user)
         app.sender.callSendAPI(user.id, article)
         resp = Action.form_resp(user,Article.art_json)
         return resp
 
-    def get_article(sender_psid):
-        return {"text":"Voici un article"}
+    def get_article(user):
+        if not user.last_article_index or user.last_article_index == config.NUM_ARTICLES:
+            user.last_article_index = 0
+        article_id, title, url = get_latest_article(user.last_article_index)
+        user.last_article_index += 1
+        user.last_article_id = article_id
+        db.session.commit()
+        return {"text":f"{title} :\n {url}"}
 
 class Archive(Action):
     with open('app/action_context_archive.json') as json_data:
         arc_json = json.load(json_data)
 
     def get_response(user):
-        article = Archive.get_archive(user.id)
+        article = Archive.get_archive(user)
         print(user.id)
         app.sender.callSendAPI(user.id, article)
         resp = Action.form_resp(user,Archive.arc_json)
         return resp
 
-    def get_archive(sender_psid):
-        return {"text":"Voici une archive"}
+    def get_archive(user):
+        if not user.rank_last_archive or user.rank_last_archive == config.NUM_ARCHIVES:
+            user.rank_last_archive = 0
+        title, url, year = get_matching_archive(user.last_article_id, user.rank_last_archive)
+        user.rank_last_archive += 1
+        db.session.commit()
+        return {"text":f"de l'année {year} :\n{title} :\n {url}"}
