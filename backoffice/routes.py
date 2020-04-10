@@ -9,5 +9,4 @@ def add_article():
             article_text=request.form.get("text"), newspaper=request.form.get("newspaper"), url=request.form.get("url"))
         db.session.add(article)
         db.session.commit()
-        added = True
-    return render_template("form.html",inserted_article=added)
+    return render_template("form.html")
