@@ -168,7 +168,7 @@ class Word2VecModel(Model):
     def train(self):
         token_lists = [article.tokens for article in self.articles]
         w2v_progress = W2VProgress(self.iterations*self.n_tokens/self.batch_size)
-        model = Word2Vec(sentences=token_lists, size = self.size, window = self.window, 
+        model = Word2Vec(sentences=token_lists, size = self.size, window = self.window, sg=1,
             min_count=self.words_no_above, workers=cpu_count(), iter=self.iterations, callbacks=[w2v_progress])
         w2v_progress.close()
         self.vocabulary = set(model.wv.vocab)

@@ -2,21 +2,22 @@
 import numpy as np
 import logging
 
+logger = logging.getLogger(__name__)
 
 # function to enter the topic in eta
 def add_topic_to_eta(words, topic_nb, eta, dictionary):
-    logging.info('Topic number '+str(topic_nb))
+    logger.info('Topic number '+str(topic_nb))
     for word in words:
         if word in dictionary.token2id:
             eta[topic_nb, dictionary.token2id[word]]*=10
         else:
-            logging.info(word,' not in the dictionary')
+            logger.info(f"{word} not in the dictionary")
 
 # Functions that returns an eta matrix, depending on the n
 def create_eta(topics, num_topics, dictionary):
     eta = np.ones((num_topics, len(dictionary)))*1/num_topics
     if num_topics < len(topics):
-        logging.info('You try to seed to many topics')
+        logger.info('You try to seed to many topics')
         return None
     else:
         topic_nb = 0
