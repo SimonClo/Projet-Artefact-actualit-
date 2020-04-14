@@ -8,9 +8,19 @@ services:
         container_name: artefact_db
         ports: 
             - 8765:5432
+    backoffice:
+        build: ./backoffice
+        image: artefact_backoffice_img
+        container_name: artefact_backoffice
+        ports:
+            - 8080:5000
+        depends_on: 
+            - database
     bot:
         build: ./bot
         image: artefact_bot_img
         container_name: artefact_bot 
         ports:
             - 5000:5000 
+        depends_on: 
+            - database
