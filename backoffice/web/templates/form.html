@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="mt-3 mb-3">
+    Add a new article to the database
+</h1>
+<form id="insertionForm">
+    <div class="form-group">
+        <label for="title">Titre : </label>
+        <input type="text" class="form-control" name="title" />
+    </div>
+    <div class="row">
+        <div class="form-group col-lg-6">
+            <label for="date">Date de publication : </label>
+            <input type="text" class="form-control" name="date" placeholder="jj/mm/aaaa" />
+        </div>
+        <div class="form-group col-lg-6">
+            <label for="newspaper">Quotidien : </label>
+            <input type="text" class="form-control" name="newspaper" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="url">Url : </label>
+        <input type="text" class="form-control" name="url" placeholder="http://monadresse.com" />
+    </div>
+    <div class="form-group">
+        <label for="text">texte : </label>
+        <textarea name="text" class="form-control" rows="10">copiez le texte ici</textarea>
+    </div>
+    <div class="text-center">
+        <button id="addButton" class="btn btn-primary">Ajouter</button>
+    </div>
+</form>
+<div class="modal fade" id="insertionModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Article ajouté</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>L'article a été ajouté dans la base de donnée. Relancez le matching pour le voir apparaître sur le bot.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+<script src="js/verify_insertion.js"></script>
+{% endblock %}
