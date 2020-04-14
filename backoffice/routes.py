@@ -8,7 +8,7 @@ def article_form():
 
 @app.route("/add_article", methods=["POST"])
 def add_article():
-    article = RecentArticle(title=request.form.get("title"), published_date=request.form.get("published_date"), 
+    article = RecentArticle(title=request.form.get("title"), published_date=request.form.get("date"), 
         article_text=request.form.get("text"), newspaper=request.form.get("newspaper"), url=request.form.get("url"))
     db.session.add(article)
     db.session.commit()
